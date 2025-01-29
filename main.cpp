@@ -1,5 +1,5 @@
 #include <Launcher.hpp>
-#include <Game.hpp>
+#include <NoiseApp.hpp>
 
 /**
  * To be executed by the launcher, the Game class needs :
@@ -14,9 +14,9 @@
 
 int main()
 {
-    Game *game = nullptr;
-    std::string winname =  "Sanctia - Proof of Concept";
-    int ret = launchGame(&game, winname, 5);
-    if(game) delete game;
+    NoiseApp *app = nullptr;
+    std::string winname =  "Real Time Spatially Varying Noise";
+    int ret = launchGame(&app, winname, 5);
+    if(app) delete app;
     return ret; 
 }
