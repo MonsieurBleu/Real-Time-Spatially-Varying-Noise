@@ -3,14 +3,16 @@
 #include <Inputs.hpp>
 #include <Globals.hpp>
 #include <AssetManager.hpp>
-
 #include <Blueprint/EngineBlueprintUI.hpp>
+#include <NoiseTester.hpp>
 
 NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 
 void NoiseApp::init(int paramSample)
 {
     App::init();
+    loadAllAssetsInfos("data/");
+    NoiseTester::createNoisesMaterials();
     App::setController(nullptr);
     ambientLight = vec3(0.1);
     camera.init(radians(90.0f), globals.windowWidth(), globals.windowHeight(), 0.1f, 1E4f);
@@ -117,9 +119,46 @@ void NoiseApp::mainloop()
         , EntityGroupInfo()
     );
 
-    EntityRef test = VulpineBlueprintUI::ColoredConstEntry("TEST", [](){return U"SALUT JE SUIS LE TEST";});
-    ComponentModularity::addChild(*rootEntity, test);
+    // EntityRef test = VulpineBlueprintUI::ColoredConstEntry("TEST", [](){return U"SALUT JE SUIS LE TEST";});
+    // ComponentModularity::addChild(*rootEntity, test);
 
+    rootEntity->comp<WidgetStyle>().setautomaticTabbing(2);
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            "test2D", 
+            vec2(-1, 1), 
+            vec2(-1, 1)
+        )
+    );
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            "test2D", 
+            vec2(-10, 10), 
+            vec2(-10, 10)
+        )
+    );
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            "test2D", 
+            vec2(-40, 40), 
+            vec2(-40, 40)
+        )
+    );
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            "test2D", 
+            vec2(-1, 1), 
+            vec2(-10, 10)
+        )
+    );
 
     while (state != AppState::quit)
     {
