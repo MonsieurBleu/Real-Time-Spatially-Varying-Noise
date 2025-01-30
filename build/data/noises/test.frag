@@ -37,7 +37,7 @@ void main()
     // auv.x += cos(_iTime)*0.25;
     // auv.y += sin(_iTime)*0.25;
     
-    auv += mod(_iTime*0.05, 512);
+    auv += mod(_iTime*0.05, 16);
     auv.x *= xrange.y;
     auv.y *= yrange.y;
 
@@ -74,21 +74,58 @@ void main()
 
 
     fragColor.a = 1.0;
-
-    fragColor.r = pow(cos(auv.x*20)*0.5 + 0.5, 1);
-    fragColor.g = pow(cos(auv.y*20)*0.5 + 0.5, 1);
     fragColor.b = pow(tmp, 10);
 
-    vec3 center;
-    fragColor.rgb = voronoi3d(vec3(auv*10, 0), center);
+    // fragColor.rgb = vec3(gradientNoise(auv*10));
 
-    fragColor.rgb = vec3(gradientNoise(auv*10));
+    // auv -= mod(auv, 0.1);
+    // fragColor.rgb = rand3to3(vec3(auv*10, 0));
 
-    auv -= mod(auv, 0.1);
+    float d = 0;
+
+    float s = 0.1;
+
+
+    // if(hash.x < 0.1)
+
+    for(int i = 0; i < 10; i++)
+    {
+        vec3 r = rand3to3(s.xxx);
+
+        vec2 off = s * (r.xy - 0.5);
+        // off = vec2(0);
+
+        vec2 grid = auv - mod(auv + off, s);
+        vec2 center = grid + s*0.5;
+
+        vec3 hash = rand3to3(vec3(grid, 0));
+
+        if(length(hash.xyz) < 1.0)
+        {
+            d = 1.0;
+            d = 1.0 - 2.0*distance(auv, center)/s;
+
+            d = clamp(d, 0.0, 1.0);
+
+            auv = mix(auv, center, pow(d, 1.0 + 5.0*hash.z));
+        }
+
+        s += r.z * s * 2.0;
+    }
+
+    // fragColor.rgb = vec3(d);
+    // fragColor.rgb = gradientNoise(auv*10).xxx;
+
+    // fragColor.g = max(
+    //     pow(cos(auv.y*30*PI / yrange.y)*0.5 + 0.5, 100),
+    //     pow(cos(auv.x*30*PI / yrange.y)*0.5 + 0.5, 100)
+    //     );
+    
+    // vec3 center;
+    // fragColor.rb = voronoi3d(vec3(auv*10, 0), center).xy;
+
+    auv -= mod(auv, 0.0025);
     fragColor.rgb = rand3to3(vec3(auv*10, 0));
 
-    // fragColor.b = min(distance(uv, vec2(0, 0)), distance(uv, vec2(1, 0)));
-    // fragColor.b = distance(auv.y, 0);
-    
-    if(fragColor.a == 0.f) discard;
+    fragColor.rgb = vec3(length(fragColor.rgb)/length(vec3(1)));
 }
