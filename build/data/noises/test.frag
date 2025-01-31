@@ -4,6 +4,7 @@
 #include uniform/Model3D.glsl
 
 #include functions/Noise.glsl
+#include ../../data/noises/utils.glsl
 
 layout (location = 0) out vec4 fragColor;
 
@@ -17,50 +18,19 @@ in vec2 scale;
 
 in float tmp;
 
+
+
+
 void main()
 {
-    vec2 auv = uv *2.0 - 1.0;
+    vec2 auv = uv *2.0 - 1.0;    
+    float viewUVoffMax = 8.0;
+    auv += mod(_iTime*0.05, viewUVoffMax) - viewUVoffMax*0.5;
 
-
-    // auv.x = mix(
-    //     mix(xrange.x, xrange.y, uv.x),
-    //     mix(yrange.x, yrange.y, uv.x),
-    //     uv.y
-    // );
-
-    // auv.y = mix(
-    //     mix(xrange.x, xrange.y, uv.y),
-    //     mix(yrange.x, yrange.y, uv.y),
-    //     uv.x
-    // );
-
-    // auv.x += cos(_iTime)*0.25;
-    // auv.y += sin(_iTime)*0.25;
+    auv.x *= xrange.y * 0.5;
+    auv.y *= yrange.y * 0.5;
     
-    auv += mod(_iTime*0.05, 16);
-    auv.x *= xrange.y;
-    auv.y *= yrange.y;
-
-    // auv.y = mix(yrange.y, yrange.x, uv.x);
-
-    
-    vec2 ascale = scale;
-    ascale.y /= float(_iResolution.x)/float(_iResolution.y);
-
-    if(ascale.x > ascale.y)
-    {
-        auv.x *= ascale.x/ascale.y;
-        auv.x -= 0.5 * (scale.x/scale.y) * (float(_iResolution.x)/float(_iResolution.y));
-        auv.x += 0.5;
-        auv *= float(_iResolution.y)/1000;
-    }
-    else
-    {
-        auv.y /= ascale.x/ascale.y;
-        auv.y += 0.5;
-        auv.y -= 0.5 * (scale.y/scale.x) * (float(_iResolution.y)/float(_iResolution.x));
-        auv *= float(_iResolution.x)/1000;
-    }
+    CorrectUV(auv, scale),
 
     // float bias = 1e-3;
     // if(
@@ -81,51 +51,88 @@ void main()
     // auv -= mod(auv, 0.1);
     // fragColor.rgb = rand3to3(vec3(auv*10, 0));
 
-    float d = 0;
+    vec2 auvTMP = auv;
 
-    float s = 0.1;
+    float d = 0;
+    float d2 = 0;
+
+    float s = 0.2;
 
 
     // if(hash.x < 0.1)
 
-    for(int i = 0; i < 10; i++)
+    int first_iteration = 0;
+
+    for(int i = 0; i < 12; i++)
     {
         vec3 r = rand3to3(s.xxx);
 
         vec2 off = s * (r.xy - 0.5);
         // off = vec2(0);
 
-        vec2 grid = auv - mod(auv + off, s);
-        vec2 center = grid + s*0.5;
+
+        float sa = sin(r.x*PI);
+        float ca = cos(r.x*PI);
+        vec2 auvMod = vec2(
+            auv.xx * vec2(ca, sa) + auv.yy * vec2(-sa, ca)
+        );
+
+        // auvMod = auv + off;
+        auv = auvMod;
+
+        vec2 grid = auv - mod(auvMod, s);
+
+        // auv += off;
+        // vec2 grid = auv - mod(auv, s);
+
+
+        vec2 center = grid + s*0.5 + s*0.5*(r.xy - 0.5);
 
         vec3 hash = rand3to3(vec3(grid, 0));
 
-        if(length(hash.xyz) < 1.0)
+        if(i >= first_iteration)
         {
-            d = 1.0;
-            d = 1.0 - 2.0*distance(auv, center)/s;
+            if(length(hash.xyz) < 1.0)
+            {
+                d = 1.0;
+                d = 1.0 - 4.0*distance(auv, center)/s;
 
-            d = clamp(d, 0.0, 1.0);
+                d = clamp(d, 0.0, 1.0);
 
-            auv = mix(auv, center, pow(d, 1.0 + 5.0*hash.z));
+                auv = mix(auv, center, -pow(d, 1.0 + 2.0*hash.z));
+
+                d2 += pow(d, 0.5 + 2.0*hash.z);
+            }
         }
 
-        s += r.z * s * 2.0;
+        s += r.z * s * 5.0;
     }
 
     // fragColor.rgb = vec3(d);
-    // fragColor.rgb = gradientNoise(auv*10).xxx;
 
-    // fragColor.g = max(
-    //     pow(cos(auv.y*30*PI / yrange.y)*0.5 + 0.5, 100),
-    //     pow(cos(auv.x*30*PI / yrange.y)*0.5 + 0.5, 100)
-    //     );
-    
-    // vec3 center;
-    // fragColor.rb = voronoi3d(vec3(auv*10, 0), center).xy;
+    vec3 gradient = gradientNoise(auvTMP*5.0).xxx;
+    vec3 center;
+    vec3 voronoi = voronoi3d(vec3(auv*10, 0), center).rrr;
 
-    auv -= mod(auv, 0.0025);
-    fragColor.rgb = rand3to3(vec3(auv*10, 0));
+    float grid = max(
+        pow(cos(auv.y*50*PI / yrange.y)*0.5 + 0.5, 20),
+        pow(cos(auv.x*50*PI / yrange.y)*0.5 + 0.5, 20)
+        );
+    fragColor.rbg *= 1.0 - grid;
+    fragColor.g += grid;
 
-    fragColor.rgb = vec3(length(fragColor.rgb)/length(vec3(1)));
+
+    fragColor.rgb =  voronoi;
+
+
+
+    fragColor.rgb = mix(voronoi, gradient, clamp(pow(d2, 1.0), 0, 1));
+
+    // fragColor.rgb = (d2/2).rrr;
+
+
+
+    // auv -= mod(auv, 0.01 * xrange.y );
+    // fragColor.rgb = rand3to3(vec3(auv*10, 0));
+    // fragColor.rgb = vec3(length(fragColor.rgb)/length(vec3(1)));
 }

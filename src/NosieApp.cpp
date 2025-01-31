@@ -10,6 +10,9 @@ NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 
 void NoiseApp::init(int paramSample)
 {
+    globals._renderScale = 1;
+    globals._UI_res_scale = 2;
+
     App::init();
     loadAllAssetsInfos("data/");
     NoiseTester::createNoisesMaterials();
@@ -122,12 +125,12 @@ void NoiseApp::mainloop()
     // EntityRef test = VulpineBlueprintUI::ColoredConstEntry("TEST", [](){return U"SALUT JE SUIS LE TEST";});
     // ComponentModularity::addChild(*rootEntity, test);
 
-    rootEntity->comp<WidgetStyle>().setautomaticTabbing(2);
+    rootEntity->comp<WidgetStyle>().setautomaticTabbing(1);
 
     ComponentModularity::addChild(
         *rootEntity, 
         NoiseTester::noiseSprite(
-            "test2D", 
+            "experiment2D", 
             vec2(-1, 1), 
             vec2(-1, 1)
         )
@@ -136,7 +139,7 @@ void NoiseApp::mainloop()
     ComponentModularity::addChild(
         *rootEntity, 
         NoiseTester::noiseSprite(
-            "test2D", 
+            "experiment2D", 
             vec2(-10, 10), 
             vec2(-10, 10)
         )
@@ -145,20 +148,20 @@ void NoiseApp::mainloop()
     ComponentModularity::addChild(
         *rootEntity, 
         NoiseTester::noiseSprite(
-            "test2D", 
+            "experiment2D", 
             vec2(-40, 40), 
             vec2(-40, 40)
         )
     );
 
-    ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            "test2D", 
-            vec2(-1, 1), 
-            vec2(-10, 10)
-        )
-    );
+    // ComponentModularity::addChild(
+    //     *rootEntity, 
+    //     NoiseTester::noiseSprite(
+    //         "test2D", 
+    //         vec2(-1, 1), 
+    //         vec2(-10, 10)
+    //     )
+    // );
 
     while (state != AppState::quit)
     {
