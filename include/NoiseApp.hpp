@@ -20,6 +20,10 @@ private:
 
     EntityRef rootEntity;
 
+    void addNoiseViewers();
+    void removeNoiseViewers();
+    std::string currentNoise = "experiment2D";
+
 public:
     
     static inline bool doAutomaticShaderRefresh = false;

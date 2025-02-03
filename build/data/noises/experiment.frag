@@ -4,6 +4,7 @@
 #include uniform/Model3D.glsl
 
 #include functions/Noise.glsl
+#include functions/HSV.glsl
 #include ../../data/noises/utils.glsl
 
 layout (location = 0) out vec4 fragColor;
@@ -159,23 +160,29 @@ void main()
 
     vec3 gradient = gradientNoise(auv*5.0).xxx;
     vec3 center;
-    vec3 voronoi = voronoi3d(vec3(auv*10, 0), center).rrr;
+    vec3 voronoi = voronoi3d(vec3(auv*10, 0), center);
 
     float grid = max(
         pow(cos(auv.y*5*PI / yrange.y)*0.5 + 0.5, 20),
         pow(cos(auv.x*5*PI / yrange.y)*0.5 + 0.5, 20)
         );
         
-    fragColor.rgb = c.rrr;
-    // fragColor.r = cos(auv.x)*0.5 + 0.5;
-    // fragColor.b = cos(auv.y)*0.5 + 0.5;
+    // fragColor.rgb = c.rrr;
+    fragColor.r = cos(auv.x)*0.5 + 0.5;
+    fragColor.b = cos(auv.y)*0.5 + 0.5;
     
-    // fragColor.rgb = voronoi.xxx;
+    // fragColor.rgb = voronoi.rgb;
 
     // fragColor.rbg *= 1.0 - grid;
-    // fragColor.g += grid;
+    // fragColor.g += grid*0.5;
 
     // fragColor.rgb = d.rrr;
 
     fragColor.a = 1.0;
+
+    // fragColor.rgb = hsv2rgb(vec3(_iTime*0.1, uv.x, uv.y));
+    // fragColor.rgb = vec3(pow(cos(uv.x*PI*6), 2));
+    fragColor.rgb = rand3to3(vec3(uv*1000.0, 0));
+
+    // fragColor.rgb = vec3(1, 0.5, 0);
 }

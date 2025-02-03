@@ -1,7 +1,7 @@
 experiment2D
 :	experiment2D
 	: uniforms 2D
-	: data/noises/noise2D.vert
 	: data/noises/experiment.frag
+	: data/noises/noise2D.vert
 	;
 ;

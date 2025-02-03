@@ -99,6 +99,47 @@ void NoiseApp::initInput()
     );
 }
 
+void NoiseApp::addNoiseViewers()
+{
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            currentNoise, 
+            vec2(-1, 1), 
+            vec2(-1, 1)
+        )
+    );
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            currentNoise, 
+            vec2(-10, 10), 
+            vec2(-10, 10)
+        )
+    );
+
+    ComponentModularity::addChild(
+        *rootEntity, 
+        NoiseTester::noiseSprite(
+            currentNoise, 
+            vec2(-40, 40), 
+            vec2(-40, 40)
+        )
+    );
+}
+
+void NoiseApp::removeNoiseViewers()
+{
+    rootEntity->comp<EntityGroupInfo>().children.pop_back();
+    rootEntity->comp<EntityGroupInfo>().children.pop_back();
+    rootEntity->comp<EntityGroupInfo>().children.pop_back();
+
+    ManageGarbage<WidgetBackground>();
+    ManageGarbage<WidgetSprite>();
+    ManageGarbage<WidgetText>();
+}
+
 void NoiseApp::mainloop()
 {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -127,32 +168,40 @@ void NoiseApp::mainloop()
 
     rootEntity->comp<WidgetStyle>().setautomaticTabbing(1);
 
-    ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            "experiment2D", 
-            vec2(-1, 1), 
-            vec2(-1, 1)
-        )
-    );
+    std::unordered_map<std::string, EntityRef> noiseMap;
+
+    for(auto &i : Loader<MeshMaterial>::loadingInfos)
+        Loader<MeshMaterial>::get(i.first);
+
+    for(auto &i : Loader<MeshMaterial>::loadedAssets)
+    {
+        if(i.second->vert.get_Path() == "data/noises/noise2D.vert")
+        {
+            noiseMap[i.first] = EntityRef();
+        }
+    }
 
     ComponentModularity::addChild(
         *rootEntity, 
-        NoiseTester::noiseSprite(
-            "experiment2D", 
-            vec2(-10, 10), 
-            vec2(-10, 10)
+        VulpineBlueprintUI::StringListSelectionMenu(
+            "Noise Selection Menu", noiseMap, 
+            [&](Entity *e, float v)
+            {
+                removeNoiseViewers();
+                currentNoise = e->comp<EntityInfos>().name;
+                addNoiseViewers();
+                NOTIF_MESSAGE(currentNoise);
+            },
+            [&](Entity *e)
+            {
+                return e->comp<EntityInfos>().name == currentNoise ? 0.f : 1.f;
+            },
+            0.f
         )
     );
 
-    ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            "experiment2D", 
-            vec2(-40, 40), 
-            vec2(-40, 40)
-        )
-    );
+
+    addNoiseViewers();
 
     // ComponentModularity::addChild(
     //     *rootEntity, 
@@ -162,6 +211,8 @@ void NoiseApp::mainloop()
     //         vec2(-10, 10)
     //     )
     // );
+
+    doAutomaticShaderRefresh = true;
 
     while (state != AppState::quit)
     {
@@ -179,7 +230,7 @@ void NoiseApp::mainloop()
         itcnt++;
         if (doAutomaticShaderRefresh)
         {
-            if (itcnt % 144 == 0)
+            if (itcnt % 10 == 0)
             {
                 system("clear");
                 std::cout << TERMINAL_INFO << "Refreshing ALL shaders...\n" << TERMINAL_RESET;
@@ -192,6 +243,14 @@ void NoiseApp::mainloop()
                     m.second->reset();
             }
         }
+
+        /* Retreiving the 2D scene RGB values */
+        auto &screenTexture = screenBuffer2D.getTexture(0);
+        screen2Dres = screenTexture.getResolution();
+        // NOTIF_MESSAGE(vec2(screen2Dres));
+        screen2D.resize(screen2Dres.x * screen2Dres.y);
+        screenTexture.bind(0);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, screen2D.data());
 
         /* UI Update */
         WidgetUI_Context uiContext = WidgetUI_Context(&ui);

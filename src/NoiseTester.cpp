@@ -3,6 +3,7 @@
 #include <AssetManager.hpp>
 #include <AssetManagerUtils.hpp>
 #include <Utils.hpp>
+#include <Helpers.hpp>
 
 #include <NoiseEntity.hpp>
 #include <Blueprint/EngineBlueprintUI.hpp>
@@ -32,8 +33,9 @@ void NoiseTester::createNoisesMaterials()
                 std::fstream file("data/noises/auto/" + name2D + ".vulpineMaterial", std::ios::out);
                 file << name2D 
                      << "\n:\t" + name2D  
-                     << "\n\t: uniforms 2D\n\t: data/noises/noise2D.vert\n\t: " 
-                     << path << "\n\t;\n;";
+                     << "\n\t: uniforms 2D\n\t: " << path 
+                     << "\n\t: data/noises/noise2D.vert\n\t;\n;"
+                     ;
                 file.close();
 
                 Loader<MeshMaterial>::addInfos(filename.c_str());
@@ -82,12 +84,66 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
     sprite->uniforms.add(ShaderUniform(yrange, 33));
 
     WidgetBox box;
-    box.useClassicInterpolation = true;
+    // box.useClassicInterpolation = true;
 
-    return newEntity(materialName + "Vizualazer"
+    EntityRef noiseView = newEntity(materialName + " - Vizualazer"
         , UI_BASE_COMP
         , box
         , WidgetStyle()
         , WidgetSprite(sprite)
+        , WidgetRenderInfos()
     );
+
+    noiseView->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 0));
+
+    auto noiseViewPTR = noiseView.get();
+
+    EntityRef histparent = newEntity(materialName +" - Histogram Parent View"
+        , UI_BASE_COMP
+        , WidgetBox()
+        , WidgetStyle()
+            .setautomaticTabbing(3)
+        , EntityGroupInfo()
+        );
+
+    for(auto i = 0; i < 3; i++)
+    {
+        vec4 color(0, 0, 0, 0.5);
+        color[i] = 1;
+        ComponentModularity::addChild(
+            *histparent,
+            newEntity(materialName + " - Histogram View"
+                , UI_BASE_COMP
+                , WidgetSprite(PlottingHelperRef(new PlottingHelper(color, 255)))
+            , WidgetBox(
+                [noiseViewPTR, i](Entity *parent, Entity *child)
+                {
+                    PlottingHelper* p = (PlottingHelper*)child->comp<WidgetSprite>().sprite.get();
+                    auto &rinfos = noiseViewPTR->comp<WidgetRenderInfos>();
+
+                    p->maxv = 0;
+                    p->minv = 0;
+
+                    for(int j = 0; j < 256; j++)
+                    {
+                        float v = rinfos.hist[j][i];
+                        p->push(v);
+                        p->maxv = max(v, p->maxv);
+                    }
+
+                    p->updateData();
+                }).set(vec2(-1, 1), vec2(0, 1))
+            )
+        );
+    }
+
+    EntityRef parent = newEntity(materialName +" - Parent View"
+        , UI_BASE_COMP
+        , WidgetBox()
+        , WidgetStyle()
+            .setautomaticTabbing(2)
+        , EntityGroupInfo({noiseView, histparent})
+        );
+
+    return parent;
 }
