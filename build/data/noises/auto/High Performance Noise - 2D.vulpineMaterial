@@ -1,0 +1,7 @@
+"High Performance Noise - 2D"
+:	"High Performance Noise - 2D"
+	: uniforms 2D
+	: "data/noises/High Performance Noise.frag"
+	: data/noises/noise2D.vert
+	;
+;

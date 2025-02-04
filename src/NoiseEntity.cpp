@@ -54,7 +54,24 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     for(auto &i : rinfo.hist)
         i *= isize;
 
-    rinfo.avg = vec3(sum) * isize;
+    rinfo.avg = vec3(sum) * isize / 255.f;
+
+    rinfo.esp = vec3(0);
+    rinfo.var = vec3(0);
+
+    for(int x = pmin.x; x < pmax.x; x++)
+    for(int y = pmin.y; y < pmax.y; y++)
+    {
+        int id = y*screen2Dres.x + x;
+        u8vec3 c = screen2D[id];
+        rinfo.esp += vec3(c) * vec3(rinfo.hist[c.x].x, rinfo.hist[c.y].y, rinfo.hist[c.z].z);
+
+        vec3 d = (vec3(c) / 255.f) - rinfo.avg;
+        rinfo.var += d*d;
+    }
+
+    rinfo.esp *= isize / 255.f;
+    rinfo.var *= isize;
 
     // NOTIF_MESSAGE(pmin.x << " " << pmax.x << " | " << pmin.y << " " << pmax.y);
     // NOTIF_MESSAGE(vec2(screen2Dres));

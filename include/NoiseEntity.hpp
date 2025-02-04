@@ -18,7 +18,9 @@ inline ivec2 screen2Dres;
 struct WidgetRenderInfos
 {
     vec3 hist[256];
-    vec3 avg;
+    vec3 avg = vec3(0);
+    vec3 esp = vec3(0);
+    vec3 var = vec3(0);
 };
 
 Adaptive_Component(WidgetRenderInfos)

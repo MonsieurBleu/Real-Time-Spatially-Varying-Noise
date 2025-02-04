@@ -25,15 +25,15 @@ void NoiseTester::createNoisesMaterials()
         {
             
 
-            std::string name2D = name + "2D";
+            std::string name2D = name + " - 2D";
             if(MLO.find(name + "2D") == MLO.end())
             {
                 std::string filename = "data/noises/auto/" + name2D + ".vulpineMaterial";
 
                 std::fstream file("data/noises/auto/" + name2D + ".vulpineMaterial", std::ios::out);
-                file << name2D 
-                     << "\n:\t" + name2D  
-                     << "\n\t: uniforms 2D\n\t: " << path 
+                file << "\"" << name2D << "\"" 
+                     << "\n:\t" << "\"" << name2D << "\""  
+                     << "\n\t: uniforms 2D\n\t: \"" << path << "\""
                      << "\n\t: data/noises/noise2D.vert\n\t;\n;"
                      ;
                 file.close();
@@ -110,30 +110,66 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
     {
         vec4 color(0, 0, 0, 0.5);
         color[i] = 1;
+
+        EntityRef renderInfos = newEntity(materialName + " - Render Info View"
+            , UI_BASE_COMP
+            , WidgetBox()
+            , WidgetStyle()
+                .setautomaticTabbing(1)
+            , EntityGroupInfo({
+                newEntity(materialName + " - Histogram View"
+                    , UI_BASE_COMP
+                    , WidgetSprite(PlottingHelperRef(new PlottingHelper(color, 255)))
+                    , WidgetBox(
+                        [noiseViewPTR, i](Entity *parent, Entity *child)
+                        {
+                            PlottingHelper* p = (PlottingHelper*)child->comp<WidgetSprite>().sprite.get();
+                            auto &rinfos = noiseViewPTR->comp<WidgetRenderInfos>();
+
+                            p->maxv = 0;
+                            p->minv = 0;
+
+                            for(int j = 0; j < 256; j++)
+                            {
+                                float v = rinfos.hist[j][i];
+                                p->push(v);
+                                p->maxv = max(v, p->maxv);
+                            }
+
+                            p->updateData();
+                        }
+                    )
+                ),
+                newEntity(materialName + " - Scalar Stats View"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle().setautomaticTabbing(4)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::ColoredConstEntry("AVG", 
+                            [noiseViewPTR, i]()
+                            {
+                                return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().avg[i], 5);
+                            }                        
+                        ),
+                        // VulpineBlueprintUI::ColoredConstEntry("ESP", 
+                        //     [noiseViewPTR, i]()
+                        //     {
+                        //         return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().esp[i], 5);
+                        //     }                        
+                        // ),
+                        VulpineBlueprintUI::ColoredConstEntry("VAR", 
+                            [noiseViewPTR, i]()
+                            {
+                                return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().var[i], 5);
+                            }
+                        )
+                    })
+                )
+            })
+        );
+
         ComponentModularity::addChild(
-            *histparent,
-            newEntity(materialName + " - Histogram View"
-                , UI_BASE_COMP
-                , WidgetSprite(PlottingHelperRef(new PlottingHelper(color, 255)))
-            , WidgetBox(
-                [noiseViewPTR, i](Entity *parent, Entity *child)
-                {
-                    PlottingHelper* p = (PlottingHelper*)child->comp<WidgetSprite>().sprite.get();
-                    auto &rinfos = noiseViewPTR->comp<WidgetRenderInfos>();
-
-                    p->maxv = 0;
-                    p->minv = 0;
-
-                    for(int j = 0; j < 256; j++)
-                    {
-                        float v = rinfos.hist[j][i];
-                        p->push(v);
-                        p->maxv = max(v, p->maxv);
-                    }
-
-                    p->updateData();
-                }).set(vec2(-1, 1), vec2(0, 1))
-            )
+            *histparent, renderInfos
         );
     }
 

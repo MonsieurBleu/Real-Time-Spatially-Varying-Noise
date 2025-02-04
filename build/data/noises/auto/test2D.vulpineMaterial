@@ -1,7 +1,0 @@
-test2D
-:	test2D
-	: uniforms 2D
-	: data/noises/test.frag
-	: data/noises/noise2D.vert
-	;
-;

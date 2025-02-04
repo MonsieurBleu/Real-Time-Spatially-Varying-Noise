@@ -200,7 +200,6 @@ void NoiseApp::mainloop()
         )
     );
 
-
     addNoiseViewers();
 
     // ComponentModularity::addChild(
@@ -230,7 +229,7 @@ void NoiseApp::mainloop()
         itcnt++;
         if (doAutomaticShaderRefresh)
         {
-            if (itcnt % 10 == 0)
+            if (itcnt % 50 == 0)
             {
                 system("clear");
                 std::cout << TERMINAL_INFO << "Refreshing ALL shaders...\n" << TERMINAL_RESET;

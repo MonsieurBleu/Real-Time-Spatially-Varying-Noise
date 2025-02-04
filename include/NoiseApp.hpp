@@ -22,7 +22,7 @@ private:
 
     void addNoiseViewers();
     void removeNoiseViewers();
-    std::string currentNoise = "experiment2D";
+    std::string currentNoise = "test - 2D";
 
 public:
     

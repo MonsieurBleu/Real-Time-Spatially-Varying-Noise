@@ -1,23 +1,4 @@
-#version 460
-
-#include uniform/Base3D.glsl
-#include uniform/Model3D.glsl
-
-#include functions/Noise.glsl
-#include functions/HSV.glsl
 #include ../../data/noises/utils.glsl
-
-layout (location = 0) out vec4 fragColor;
-
-// layout (binding = 0) uniform sampler2D bTexture;
-
-layout (location = 32) uniform vec2 xrange;
-layout (location = 33) uniform vec2 yrange;
-
-in vec2 uv;
-in vec2 scale;
-
-in float tmp;
 
 vec3 gravitationalNoise(vec2 auv)
 {
@@ -145,17 +126,17 @@ void main()
     // d = (gridSize*0.5 - distance(auv, gridCenter))/gridSize;
     // vec3 r = rand3to3(vec3(gridCenter, 0));
 
-    float sa = sin(d);
-    float ca = cos(d);
+    // float sa = sin(d);
+    // float ca = cos(d);
 
-    auv -= gridCenter;
-    vec2 auvMod = vec2(
-        auv.xx * vec2(ca, sa) + auv.yy * vec2(-sa, ca)
-    );
-    auvMod += gridCenter;
-    auv = auvMod;
+    // auv -= gridCenter;
+    // vec2 auvMod = vec2(
+    //     auv.xx * vec2(ca, sa) + auv.yy * vec2(-sa, ca)
+    // );
+    // auvMod += gridCenter;
+    // auv = auvMod;
 
-    c = cos(auv.x)*0.5 + 0.5;
+    // c = cos(auv.x)*0.5 + 0.5;
 
 
     vec3 gradient = gradientNoise(auv*5.0).xxx;
@@ -171,7 +152,7 @@ void main()
     fragColor.r = cos(auv.x)*0.5 + 0.5;
     fragColor.b = cos(auv.y)*0.5 + 0.5;
     
-    // fragColor.rgb = voronoi.rgb;
+    fragColor.rgb = voronoi.rgb;
 
     // fragColor.rbg *= 1.0 - grid;
     // fragColor.g += grid*0.5;
@@ -182,7 +163,7 @@ void main()
 
     // fragColor.rgb = hsv2rgb(vec3(_iTime*0.1, uv.x, uv.y));
     // fragColor.rgb = vec3(pow(cos(uv.x*PI*6), 2));
-    fragColor.rgb = rand3to3(vec3(uv*1000.0, 0));
+    // fragColor.rgb = rand3to3(vec3(uv*1000.0, 0));
 
     // fragColor.rgb = vec3(1, 0.5, 0);
 }
