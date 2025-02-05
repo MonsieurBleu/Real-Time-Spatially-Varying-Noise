@@ -42,3 +42,11 @@ void CorrectUV(in out vec2 auv, vec2 scale)
     auv.y *= yrange.y * 0.5;        \
     CorrectUV(auv, scale);          \
     fragColor.a = 1.0;
+
+float distanceFunction(vec2 uv)
+{
+    return rand3to1(vec3(uv, 0));
+
+    return clamp(distance(uv, vec2(0)), 0, 1);
+
+}

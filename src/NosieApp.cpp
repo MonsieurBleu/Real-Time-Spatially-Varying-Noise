@@ -119,21 +119,21 @@ void NoiseApp::addNoiseViewers()
         )
     );
 
-    ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            currentNoise, 
-            vec2(-40, 40), 
-            vec2(-40, 40)
-        )
-    );
+    // ComponentModularity::addChild(
+    //     *rootEntity, 
+    //     NoiseTester::noiseSprite(
+    //         currentNoise, 
+    //         vec2(-40, 40), 
+    //         vec2(-40, 40)
+    //     )
+    // );
 }
 
 void NoiseApp::removeNoiseViewers()
 {
     rootEntity->comp<EntityGroupInfo>().children.pop_back();
     rootEntity->comp<EntityGroupInfo>().children.pop_back();
-    rootEntity->comp<EntityGroupInfo>().children.pop_back();
+    // rootEntity->comp<EntityGroupInfo>().children.pop_back();
 
     ManageGarbage<WidgetBackground>();
     ManageGarbage<WidgetSprite>();

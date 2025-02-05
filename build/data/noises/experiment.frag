@@ -58,43 +58,6 @@ vec3 gravitationalNoise(vec2 auv)
 
 
 
-
-float distanceFunction(vec2 auv)
-{
-    // return gravitationalNoise(auv).z;
-
-    // return distance(auv, cos(auv) + auv);
-
-    vec3 gradient = gradientNoise(auv*5.0).xxx;
-    vec3 center;
-    vec3 voronoi = voronoi3d(vec3(auv*10, 0), center).rrr;
-
-    // auv /= 2.0-sign(auv);
-
-    // auv += 1e6;
-
-    // auv *= 2.0;
-
-    // auv = gradient.xx * 50.0;
-
-    // auv = distance(auv, mod(auv, 5.0) + 2.5).xx;
-
-
-    // auv = mix(auv, vec2(0), length(auv));
-
-
-
-
-    // float gridSize = 10.0;
-    // vec2 gridCenter = auv - mod(auv, gridSize) + gridSize*0.5;
-
-    // return 1.0 - 2.0*distance(auv, gridCenter)/gridSize;
-
-    auv = cos(auv * 0.1);
-
-    return distance(auv, vec2(0));
-}
-
 void main()
 {
     vec2 auv = uv *2.0 - 1.0;    

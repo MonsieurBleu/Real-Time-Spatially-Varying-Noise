@@ -1,0 +1,7 @@
+"Gradient - 2D"
+:	"Gradient - 2D"
+	: uniforms 2D
+	: "data/noises/Gradient.frag"
+	: data/noises/noise2D.vert
+	;
+;

@@ -1,0 +1,7 @@
+"Voronoi - 2D"
+:	"Voronoi - 2D"
+	: uniforms 2D
+	: "data/noises/Voronoi.frag"
+	: data/noises/noise2D.vert
+	;
+;
