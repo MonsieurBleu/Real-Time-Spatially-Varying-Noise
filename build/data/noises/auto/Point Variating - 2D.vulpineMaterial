@@ -1,0 +1,7 @@
+"Point Variating - 2D"
+:	"Point Variating - 2D"
+	: uniforms 2D
+	: "data/noises/Point Variating.frag"
+	: data/noises/noise2D.vert
+	;
+;

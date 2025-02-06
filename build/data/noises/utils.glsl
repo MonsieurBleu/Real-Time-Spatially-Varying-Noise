@@ -34,6 +34,9 @@ void CorrectUV(in out vec2 auv, vec2 scale)
     }
 }
 
+    // float timeShift = _iTime*0.5;   \
+    // auv += vec2(cos(timeShift), sin(timeShift)); \
+
 #define UV_PREPROCESS \
     vec2 auv = uv *2.0 - 1.0;       \
     float viewUVoffMax = 8.0;       \
@@ -45,8 +48,11 @@ void CorrectUV(in out vec2 auv, vec2 scale)
 
 float distanceFunction(vec2 uv)
 {
-    return rand3to1(vec3(uv, 0));
+    return pow(gradientNoise(uv * 0.5), 1.0);
 
-    return clamp(distance(uv, vec2(0)), 0, 1);
+    // return rand3to1(uv.rgg*10.0*SQR2);
+
+    float tmp = 0.05;
+    return clamp(distance(uv, round(uv*tmp)/tmp)*tmp*2.0, 0, 1);
 
 }

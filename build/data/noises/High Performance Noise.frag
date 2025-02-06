@@ -37,6 +37,9 @@ void main()
     UV_PREPROCESS
 
     float hexSize = 0.1;
+    // + (cos(_iTime * 0.01)*0.5 + 0.5);
+
+
     float halfHexSize = hexSize * 0.5;
 
     // float yD = min(
@@ -220,6 +223,12 @@ void main()
         // fragColor.rgb = fragColor.ggg;
     }
 
+    vec2 coordsCorectionClamp = 100.0 / hexSize.rr;
+    for(int i = 0; i < 3; i++)
+    {
+        coords[i] = round(coords[i]*coordsCorectionClamp)/coordsCorectionClamp;
+    }
+
     fragColor.rgb = alphas;
 
     vec3 tmp;
@@ -243,36 +252,41 @@ void main()
     {
         if(distanceFunction(coords[i]) < 0.5)
         {
-            colors[i] = gradientNoise(auv*10.0).rrr;
-            esp[i] = 0.5;
+            colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr * 1.5;
+            esp[i] = 0.5 * 1.5;
         }
         else
         {
-            // colors[i] = voronoi3d(vec3(auv*10.0, 0), tmp).rrr;
-            // esp[i] = 0.529;
+            colors[i] = voronoi3d(vec3(auv*10.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
+            esp[i] = 0.529 * 0.6666;
 
-            colors[i] = rand3to1(tmp).rrr;
-            esp[i] = 0.5;
+            // colors[i] = rand3to1(tmp).rrr;
+            // esp[i] = 0.5;
 
             // colors[i] = vec3(0);
             // esp[i] = 0;
         }
+
+        colors[i] = clamp(colors[i], 0, 1);
     }
 
-    float W = alphas[0]*alphas[0] + alphas[1]*alphas[1] + alphas[2]*alphas[2];
+    float W = sqrt(alphas[0]*alphas[0] + alphas[1]*alphas[1] + alphas[2]*alphas[2]);
 
-    float espSum = (esp[0] + esp[1] + esp[2])/3.0;
+    // float espSum = (esp[0] + esp[1] + esp[2])/3.0;
     // float espSum = alphas[0]*esp[0] + alphas[1]*esp[1] + alphas[2]*esp[2];
+    float espSum = mix(0.5 * 1.5, 0.529 * 0.666, 0.5);
+    // espSum = 0.56;
 
     fragColor.rgb = espSum +
         (
             (colors[0]*alphas[0]) + 
             (colors[1]*alphas[1]) + 
-            (colors[2]*alphas[2]) -
-            espSum
+            (colors[2]*alphas[2])
+            - espSum
         )/W
         ;
 
+    // fragColor.rgb = espSum.rrr;
 
     // fragColor.rgb =
     //         (colors[0]*alphas[0]) + 
@@ -280,7 +294,18 @@ void main()
     //         (colors[2]*alphas[2]) 
     //     ;
 
-    // fragColor.rgb = bCoords;
+    // fragColor.rgb = vec3(0);
+    // float tmp2 = cos(_iTime) * 0.5 + 0.5;
+    // fragColor.rgb = smoothstep(vec3(tmp2), vec3(tmp2+0.01), alphas.rgb);
+    // fragColor.g = alphas.g;
+
+    // fragColor.rgb = distanceFunction(coords[0]*10.0).rrr;
+
+    // coords[0] = round(coords[0]*10.0)/10.0;
+
+    // fragColor.rgb = rand3to3(coords[0].rgg);
+
+    // fragColor.rgb = hsv2rgb(fragColor.rgb);
 
     /*
 
