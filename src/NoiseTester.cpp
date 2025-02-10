@@ -129,7 +129,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
                             p->maxv = 0;
                             p->minv = 0;
 
-                            for(int j = 1; j < 255; j++)
+                            for(int j = 0; j < 256; j++)
                             {
                                 float v = rinfos.hist[j][i];
                                 p->push(v);

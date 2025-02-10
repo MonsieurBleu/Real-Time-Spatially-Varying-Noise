@@ -247,18 +247,22 @@ void main()
     );
     
     vec3 esp;
+    vec3 var;
 
     for(int i = 0; i < 3; i++)
     {
         if(distanceFunction(coords[i]) < 0.5)
         {
-            colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr * 1.5;
-            esp[i] = 0.5 * 1.5;
+            colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
+            esp[i] = 0.5;
+            var[i] = 0.0077;
         }
         else
         {
             colors[i] = voronoi3d(vec3(auv*10.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
             esp[i] = 0.529 * 0.6666;
+
+            var[i] = 0.015;
 
             // colors[i] = rand3to1(tmp).rrr;
             // esp[i] = 0.5;
@@ -273,8 +277,8 @@ void main()
     float W = sqrt(alphas[0]*alphas[0] + alphas[1]*alphas[1] + alphas[2]*alphas[2]);
 
     // float espSum = (esp[0] + esp[1] + esp[2])/3.0;
-    // float espSum = alphas[0]*esp[0] + alphas[1]*esp[1] + alphas[2]*esp[2];
-    float espSum = mix(0.5 * 1.5, 0.529 * 0.666, 0.5);
+    float espSum = alphas[0]*esp[0] + alphas[1]*esp[1] + alphas[2]*esp[2];
+    // float espSum = mix(0.5 * 1.5, 0.529 * 0.666, 0.5);
     // espSum = 0.56;
 
     fragColor.rgb = espSum +
@@ -285,6 +289,13 @@ void main()
             - espSum
         )/W
         ;
+
+    alphas *= alphas;
+    float varf = (alphas[0]*var[0] + alphas[1]*var[1] + alphas[2]*var[2])/(W*W);
+    fragColor.rgb = varf.rrr*50.f;
+
+    // fragColor.rgb = espSum.rrr;
+    // fragColor.rgb = W.rrr;
 
     // fragColor.rgb = espSum.rrr;
 

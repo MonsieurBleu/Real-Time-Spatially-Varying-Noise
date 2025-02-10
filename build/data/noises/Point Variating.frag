@@ -157,7 +157,7 @@ void main()
         float j = float(i);
         float exageration = 4.0;
         // exageration += (cos(_iTime)*0.5 + 0.5)*50.0;
-        exageration = 10.0;
+        // exageration = 10.0;
 
         // vec2 off = rand3to2(i.rrr);
 
@@ -177,7 +177,7 @@ void main()
     // fragColor.b = 0.0;
     fragColor.g = 0.1 + ld.r;
 
-    // fragColor.rgb = final.normal * 0.5 + 0.5;
-    // fragColor.rgb = final.result.rrr;
+    fragColor.rgb = final.normal * 0.5 + 0.5;
+    fragColor.rgb = final.result.rrr;
 
 }
