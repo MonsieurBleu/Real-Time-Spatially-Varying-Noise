@@ -40,7 +40,7 @@ void CorrectUV(in out vec2 auv, vec2 scale)
 #define UV_PREPROCESS \
     vec2 auv = uv *2.0 - 1.0;       \
     float viewUVoffMax = 8.0;       \
-    auv += 1.0 * (mod(_iTime*0.05, viewUVoffMax) - viewUVoffMax*0.5); \
+    auv += 0.0 * (mod(_iTime*0.05, viewUVoffMax) - viewUVoffMax*0.5); \
     auv.x *= xrange.y * 0.5;        \
     auv.y *= yrange.y * 0.5;        \
     CorrectUV(auv, scale);          \
@@ -48,7 +48,9 @@ void CorrectUV(in out vec2 auv, vec2 scale)
 
 float distanceFunction(vec2 uv)
 {
-    return pow(gradientNoise(uv * 0.5), 1.0);
+    return clamp((uv.x + 1.5)*0.75, 0.0, 1e3);
+
+    return pow(gradientNoise(uv * 20.0), 1.0);
 
     // return rand3to1(uv.rgg*10.0*SQR2);
 
