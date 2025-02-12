@@ -11,7 +11,7 @@ NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 void NoiseApp::init(int paramSample)
 {
     globals._renderScale = 1;
-    globals._UI_res_scale = 2;
+    globals._UI_res_scale = 1;
 
     App::init();
     loadAllAssetsInfos("data/");
@@ -73,7 +73,7 @@ void NoiseApp::init(int paramSample)
     globals.fpsLimiter.activate();
     globals.fpsLimiter.freq = 144.f;
     // globals.fpsLimiter.freq = 45.f;
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     /* Loading assets */
     loadAllAssetsInfos("data");

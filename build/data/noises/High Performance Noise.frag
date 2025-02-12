@@ -36,7 +36,8 @@ void main()
 {
     UV_PREPROCESS
 
-    float hexSize = 0.1;
+    float hexSize = 0.025;
+    auv *= 1.25;
     // + (cos(_iTime * 0.01)*0.5 + 0.5);
 
 
@@ -251,24 +252,32 @@ void main()
 
     for(int i = 0; i < 3; i++)
     {
-        if(distanceFunction(coords[i]) < 0.5)
+        // if(distanceFunction(coords[i]) < 0.1)
+        if(distanceFunction(coords[i]) > rands[i].z + 0.1)
         {
-            colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
-            esp[i] = 0.5;
-            var[i] = 0.0077;
+            // colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
+            // esp[i] = 0.5;
+            // var[i] = 0.0077;
+
+            colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(40.0 * auv * vec2(0.25, 1.0)))).rrr;
+            esp[i] = 0.76;
+            var[i] = 0.125;
         }
         else
         {
-            colors[i] = voronoi3d(vec3(auv*10.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
-            esp[i] = 0.529 * 0.6666;
-
-            var[i] = 0.015;
+            // colors[i] = voronoi3d(vec3(auv*20.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
+            // esp[i] = 0.529 * 0.6666;
+            // var[i] = 0.015;
 
             // colors[i] = rand3to1(tmp).rrr;
             // esp[i] = 0.5;
 
             // colors[i] = vec3(0);
             // esp[i] = 0;
+
+            colors[i] = (smoothstep(-0.25, 1.0, 0.75 - cnoise(auv*30.0 * -vec2(0.75, 1.0)))).rrr;
+            esp[i] = 0.79;
+            var[i] = 0.056;
         }
 
         colors[i] = clamp(colors[i], 0, 1);
@@ -292,87 +301,14 @@ void main()
 
     alphas *= alphas;
     float varf = (alphas[0]*var[0] + alphas[1]*var[1] + alphas[2]*var[2])/(W*W);
-    fragColor.rgb = varf.rrr*50.f;
-
-    // fragColor.rgb = espSum.rrr;
-    // fragColor.rgb = W.rrr;
-
-    // fragColor.rgb = espSum.rrr;
-
-    // fragColor.rgb =
-    //         (colors[0]*alphas[0]) + 
-    //         (colors[1]*alphas[1]) + 
-    //         (colors[2]*alphas[2]) 
-    //     ;
-
-    // fragColor.rgb = vec3(0);
-    // float tmp2 = cos(_iTime) * 0.5 + 0.5;
-    // fragColor.rgb = smoothstep(vec3(tmp2), vec3(tmp2+0.01), alphas.rgb);
-    // fragColor.g = alphas.g;
-
-    // fragColor.rgb = distanceFunction(coords[0]*10.0).rrr;
-
-    // coords[0] = round(coords[0]*10.0)/10.0;
-
-    // fragColor.rgb = rand3to3(coords[0].rgg);
-
-    // fragColor.rgb = hsv2rgb(fragColor.rgb);
-
-    /*
-
-        0 0
-        1 1
-
-    */
-
-    // vec2 tip_LEFT_BOTTOM = vec2(
-    //     floor(auv.x/(hexDim.x*2.0))*(hexDim.x*2.0), 
-    //     ceil(auv.y/hexDim.y)*hexDim.y
-    //     );
-
-    // fragColor.rgb = vec3(0);
-
-    /* 
-
-        f(x)
-            y = ax + c
-            y - ax - c = 0
-
-        n(x)        
-            y = -ax
-            y + ax = 0
-        
-        c = p - n(x)A
+    // fragColor.rgb = varf.rrr*50.f;
 
 
-        M : the point to project
-        A : point of the Line L
-        u : Direction vector of Line L
-        P : projected point of M on Line L 
+    // fragColor.rgb = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(40.0 * auv * vec2(0.25, 1.0)))).rrr;
+    // AVG = 0.45
+    // VAR = 0.233
 
-        P = A + dot(dot(M-A, u)/length(u), u)
-
-    */
-
-    // vec2 linePoint = vec2(
-    //     ceil(auv.x/hexDim.x)*hexDim.x,
-    //     ceil(auv.y/hexDim.y)*hexDim.y
-    // );
-    // vec2 lineDir = 1.0/normalize(hexDim * vec2(-1, 1));
-    // vec2 proj = projectOnLine2D(auv, linePoint, lineDir);
-
-    // vec2 linePoint2 = vec2(
-    //     floor(auv.x/hexDim.x)*hexDim.x,
-    //     round(auv.y/hexDim.y)*hexDim.y
-    // );
-    // vec2 lineDir2 = 1.0/normalize(hexDim * vec2(-1, 1));
-    // vec2 proj2 = projectOnLine2D(auv, linePoint2, lineDir2);
-    
-
-    // fragColor.g = 1.0 - distance(proj, auv);
-    // fragColor.b = 1.0 - distance(proj2, auv);
-
-    // fragColor.rgb = rand3to3(vec3(seed, 1));
-    // fragColor.g = max(gUV.x, gUV.y);
-    // fragColor.rg = gUV;
+    // fragColor.rgb = (smoothstep(-0.25, 1.0, 0.75 - cnoise(auv * vec2(0.75, 1.0)))).rrr;
+    // AVG = 0.7
+    // VAR = 0.056
 }
