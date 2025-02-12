@@ -217,11 +217,13 @@ void main()
         //     // + pow((1.0 - fragColor.rgb), vec3(5.0))
         //     ;
 
-        fragColor.rgb = smoothstep(vec3(0.), vec3(1.0), fragColor.rgb );
+        fragColor.rgb = smoothstep(vec3(0.), vec3(1.0), fragColor.rgb);
 
         // fragColor.rgb = rand3to3((round(auv/size)*size).xyy);
 
         // fragColor.rgb = rand3to3(auv.xyy*100.0);
+
+        
 
         // fragColor.rgb = d4.rrr;
     }

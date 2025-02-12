@@ -1,0 +1,7 @@
+"Blending Tests - 2D"
+:	"Blending Tests - 2D"
+	: uniforms 2D
+	: "data/noises/Blending Tests.frag"
+	: data/noises/noise2D.vert
+	;
+;

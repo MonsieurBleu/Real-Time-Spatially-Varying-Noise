@@ -99,7 +99,7 @@ noiseResult spikeNoise(vec2 uv, float size, float dist, float exageration, float
         r.normal = sign(e1-delta)*normalize(cross(vec3(1, 0, dg.x), vec3(0, 1, dg.y)));
     }
 
-    r.result = smoothstep(e0, e1, delta);
+    r.result = smoothstep(e0, e1, delta*0.5);
 
     return r;
 }
@@ -125,11 +125,11 @@ void main()
 
     // auv.x -= 2.0;
 
-    float size = 0.25;
+    float size = 0.075;
 
     float a = cos(_iTime)*0.5 + 0.5;
 
-    a = clamp(((auv.x + 0.6)), 0, 1);
+    a = clamp(((auv.x + 0.25)), 0, 1);
 
     // a = 0;
 
@@ -152,12 +152,14 @@ void main()
     //     sum += parametrablePointNoise(nuv, 0.1, a, 5.0, 1.0);
     // }
 
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 40; i++)
     {
         float j = float(i);
         float exageration = 4.0;
         // exageration += (cos(_iTime)*0.5 + 0.5)*50.0;
         // exageration = 10.0;
+
+        exageration = 1.25;
 
         // vec2 off = rand3to2(i.rrr);
 
@@ -171,6 +173,10 @@ void main()
             final = s;
         }
     }
+
+    final.result *= 0.9;
+    final.result += smoothstep(0.5, 1., 1.0-a)*0.2;
+    // final.result = smoothstep(0., 1., final.result);
 
 
     float ld = dot(final.normal, normalize(vec3(cos(_iTime), sin(_iTime), 1)));

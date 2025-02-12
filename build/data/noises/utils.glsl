@@ -38,9 +38,9 @@ void CorrectUV(in out vec2 auv, vec2 scale)
     // auv += vec2(cos(timeShift), sin(timeShift)); \
 
 #define UV_PREPROCESS \
-    vec2 auv = uv *2.0 - 1.0;       \
+    vec2 auv = uv * 2.0 - 1.0;       \
     float viewUVoffMax = 8.0;       \
-    auv += 1.0 * (mod(_iTime*0.05, viewUVoffMax) - viewUVoffMax*0.5); \
+    auv += 0.0 * (mod(_iTime*0.05, viewUVoffMax) - viewUVoffMax*0.5); \
     auv.x *= xrange.y * 0.5;        \
     auv.y *= yrange.y * 0.5;        \
     CorrectUV(auv, scale);          \
