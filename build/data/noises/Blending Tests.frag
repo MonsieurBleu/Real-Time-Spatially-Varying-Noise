@@ -4,7 +4,10 @@ void main()
 {
     UV_PREPROCESS
 
-    // auv *= 0.5;
+    // auv *= 2.0;
+
+    // auv.x /= xrange.y * 0.5;
+    // auv.y /= yrange.y * 0.5; 
 
     const int n = 4;
 
@@ -46,26 +49,29 @@ void main()
     var[2] = 0.007.rrr; 
 
     // Voronoi
-    col[3] = voronoi3d(vec3(auv*20.0, 0), nVorCenter).rrr;
-    esp[3] = 0.529.rrr;
+    col[3] = 1.0 - voronoi3d(vec3(auv*20.0, 0), nVorCenter).rrr;
+    esp[3] = 1.0 - 0.529.rrr;
     var[3] = 0.031.rrr;
 
     int b = 2;
     int c = 3;
     
-    col[b] = hsv2rgb(vec3(col[b].x*0.5 + 0.9, 2., 1.));
-    esp[b] = vec3(0.87, 0.69, 0.0);
-    var[b] = vec3(0.051, 0.1, 1e-6);
+    // col[b] = hsv2rgb(vec3(col[b].x*0.5 + 0.9, 2., 1.));
+    // esp[b] = vec3(0.87, 0.69, 0.0);
+    // var[b] = vec3(0.051, 0.1, 1e-6);
 
-    col[c] = hsv2rgb(vec3(col[c].x*0.3 - 0.7, col[c].y + 0.1, 1.));
-    esp[c] = vec3(0.37, 0.97, 0.86);
-    var[c] = vec3(0.031, 0.009, 0.01);
+    // col[c] = hsv2rgb(vec3(col[c].x*0.3 - 0.7, col[c].y + 0.1, 1.));
+    // esp[c] = vec3(0.37, 0.97, 0.86);
+    // var[c] = vec3(0.031, 0.009, 0.01);
 
     for(int i = 0; i < n; i++)
     {
         vec3 maxV = esp[i] + (1.0*(var[i]));
         vec3 minV = esp[i] - (1.0*(var[i]));
         // maxV = vec3(1.);
+
+        // maxV = vec3(1);
+        // minV = vec3(0);
 
         priority1[i] = clamp((col[i]-minV)/(maxV-minV), vec3(0.), vec3(1.));
         // priority1[i] = smoothstep(minV, maxV, col[i]);
@@ -100,6 +106,9 @@ void main()
         priority2[b] = 2.0 * vec3(a - 0.5);
         priority2[c] = - priority2[b];
 
+        // priority1[c] = 1 - priority1[c];
+        priority1[b] = 1 - priority1[b];
+
         priority1[b] += 1.0*pow(priority2[b], vec3(1.0));
         priority1[c] += 1.0*pow(priority2[c], vec3(1.0));
 
@@ -107,6 +116,15 @@ void main()
         // a = priority1[b].r;
 
         a3 = priority1[b] - priority1[c];
+
+        // if(priority1[b].x < priority1[c].x)
+        // {
+        //     a3 = vec3(0);
+        // } 
+        // else
+        // {
+        //     a3 = vec3(1);
+        // }
         
         a3 = a3.rrr;
         // a3 = min(a3.r, min(a3.g, a3.b)).rrr;
@@ -115,10 +133,36 @@ void main()
         a3 = clamp(a3, 0.0.rrr, 1.0.rrr);
 
         // float tmpa = 2.0;
-        a3 = pow(a3, 1.0.rrr - 2.0.rrr*(a3-0.0.rrr));
+        // a3 = pow(a3, 1.0.rrr - 2.0.rrr*(a3-0.0.rrr));
         // a = smoothstep(0., 1., a);
         a3 = clamp(a3, 0.0.rrr, 1.0.rrr);
     }
+
+
+
+
+    // return;
+    /*
+        0.79
+        0.44
+
+    */
+
+    // vec3 hcorCol_B = col[b];
+
+    // hcorCol_B -= esp[b];
+    // hcorCol_B *= sqrt(var[c])/sqrt(var[b]);
+    // hcorCol_B += esp[c];
+
+    // // col[b] = mix(hcorCol_B, col[b], a);
+    // col[b] = hcorCol_B;
+
+    // if(xrange.y < 2.0)
+    //     fragColor.rgb = col[b];
+    // else 
+    //     fragColor.rgb = col[c];
+    // return;
+
 
 
 
@@ -157,4 +201,7 @@ void main()
     //     fragColor.rgb = vec3(1, 0, 0);
     // else if(a < 0.)
     //     fragColor.rgb = vec3(0, 1, 0);
+
+    // fragColor.rgb = auv.xyy;
+    // fragColor.rgb = col[b];
 }

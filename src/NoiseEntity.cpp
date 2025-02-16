@@ -32,8 +32,8 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     for(auto &i : rinfo.hist)
         i = vec3(0);
 
-    for(int x = pmin.x; x < pmax.x; x++)
-    for(int y = pmin.y; y < pmax.y; y++)
+    for(int x = pmin.x+1; x < pmax.x-1; x++)
+    for(int y = pmin.y+1; y < pmax.y-1; y++)
     {
         int id = y*screen2Dres.x + x;
         // int id = x*screen2Dres.y + y;
