@@ -1,23 +1,30 @@
 #include ../../data/noises/utils.glsl
 
+#include functions/OKLab.glsl
+
 void main()
 {
     UV_PREPROCESS
 
-    // auv *= 2.0;
-
+    // auv *= 0.5;
+    // auv -= 1.0;
     // auv.x /= xrange.y * 0.5;
     // auv.y /= yrange.y * 0.5; 
 
-    const int n = 4;
+    const int n = 5;
 
     float slice = 0.001 * pow(xrange.y, 4.0);
     float a = uv.x*(1.+slice) - slice*.5;
     
     // a = cos(auv.x*5.0)*0.5 + 0.5;
+    // a = cnoise(auv*2).r;
 
     a = clamp(a, 0., 1.);
-    a = smoothstep(0., 1., a);
+
+    int smoothStepLevel = 1;
+    for(int i = 0; i < smoothStepLevel; i++)
+        a = smoothstep(0., 1., a);
+
     // a = pow(a, .5);
 
     // a = mix(0.2, 0.8, a);
@@ -53,9 +60,17 @@ void main()
     esp[3] = 1.0 - 0.529.rrr;
     var[3] = 0.031.rrr;
 
-    int b = 2;
-    int c = 3;
-    
+    // White Noise
+    col[4] = rand3to1(auv.xyy*500.0).rrr;
+    esp[4] = 0.5.rrr;
+    var[4] = 0.0834.rrr;
+
+    // int b = 2;
+    // int c = 3;
+
+    int b = 3;
+    int c = 2;
+
     // col[b] = hsv2rgb(vec3(col[b].x*0.5 + 0.9, 2., 1.));
     // esp[b] = vec3(0.87, 0.69, 0.0);
     // var[b] = vec3(0.051, 0.1, 1e-6);
@@ -66,17 +81,25 @@ void main()
 
     for(int i = 0; i < n; i++)
     {
-        vec3 maxV = esp[i] + (1.0*(var[i]));
-        vec3 minV = esp[i] - (1.0*(var[i]));
+        vec3 maxV = esp[i] + (2.0*(var[i]));
+        vec3 minV = esp[i] - (2.0*(var[i]));
         // maxV = vec3(1.);
+
+        float alphaTest = max(abs(esp[c].x - esp[b].x), 10.*abs(var[c].x - var[b].x));
+        alphaTest = clamp(alphaTest, 0, 1);
+        maxV = mix(vec3(1), maxV, alphaTest);
+        minV = mix(vec3(0), minV, alphaTest);
 
         // maxV = vec3(1);
         // minV = vec3(0);
 
-        priority1[i] = clamp((col[i]-minV)/(maxV-minV), vec3(0.), vec3(1.));
+        priority1[i] = clamp((col[i]-minV)/(maxV-minV), vec3(0.0), vec3(1.));
         // priority1[i] = smoothstep(minV, maxV, col[i]);
     }
 
+    // a = 1.;
+    // priority1[c] = cnoise(auv * 20.0).rrr;
+    // priority1[b] = cnoise(auv * -50.0 + 150.).rrr;
 
     // col[b] = vec3(1);
     // col[c] = vec3(1);
@@ -94,9 +117,9 @@ void main()
 
 
 
-    // a = 1;
 
-    // a = 0.5;
+    // a = abs(cos(_iTime));
+    // a = 0.;
     
     vec3 a3 = vec3(a);
 
@@ -107,25 +130,37 @@ void main()
         priority2[c] = - priority2[b];
 
         // priority1[c] = 1 - priority1[c];
-        priority1[b] = 1 - priority1[b];
+        // priority1[b] = 1 - priority1[b];
 
-        priority1[b] += 1.0*pow(priority2[b], vec3(1.0));
-        priority1[c] += 1.0*pow(priority2[c], vec3(1.0));
+        priority1[b] += 1.*pow(priority2[b], vec3(1.0));
+        priority1[c] += 1.*pow(priority2[c], vec3(1.0));
 
         // a = min(priority1[b].r, 1.-priority1[c].r);
         // a = priority1[b].r;
 
+        // priority1[b] = abs(priority1[b]);
+        // priority1[c] = abs(priority1[c]);
+
         a3 = priority1[b] - priority1[c];
 
-        // if(priority1[b].x < priority1[c].x)
-        // {
-        //     a3 = vec3(0);
-        // } 
-        // else
-        // {
-        //     a3 = vec3(1);
-        // }
-        
+        if(priority1[b].x < priority1[c].x)
+        {
+            a3 = vec3(0);
+        } 
+        else
+        {
+            a3 = vec3(1);
+        }
+
+        float timec = 0.1 + 0.5 + 0.5*cos(_iTime*1.0);
+        vec2 f = vec2(1.0);
+        // timec = a;
+        timec = 0.01 + 2.0*timec;
+        a3 = smoothstep(-f.x*timec, f.y*timec, (priority1[b] - priority1[c]));
+
+        // a3 = smoothstep(priority1[c].x, priority1[b].x, 0.0).rrr;
+
+
         a3 = a3.rrr;
         // a3 = min(a3.r, min(a3.g, a3.b)).rrr;
         // a3 = ((a3.r+a3.g+a3.b)/3.0).rrr;
@@ -138,8 +173,10 @@ void main()
         a3 = clamp(a3, 0.0.rrr, 1.0.rrr);
     }
 
-
-
+    // priority1[b] -= 1.*pow(priority2[b], vec3(1.0));
+    // priority1[c] -= 1.*pow(priority2[c], vec3(1.0));
+    // col[c] = priority1[c];
+    // col[b] = priority1[b];
 
     // return;
     /*
@@ -164,7 +201,22 @@ void main()
     // return;
 
 
+    // a3 = a.rrr;
 
+
+    col[c] = hsv2rgb(vec3(col[c].x*0.5 + 0.9, 2., 1.));
+    col[b] = hsv2rgb(vec3(col[b].x*0.3 - 0.7, col[b].y + 0.1, 1.));
+    col[c] = clamp(col[c], vec3(0), vec3(1));
+    col[b] = clamp(col[b], vec3(0), vec3(1));
+    // col[c] = vec3(1, 1, 0);
+    // col[b] = vec3(0, 1, 1);
+
+    #define OKLAB_COLOR_BLENDING
+    
+    #ifdef OKLAB_COLOR_BLENDING
+    col[c] = rgb2oklab(col[c]);
+    col[b] = rgb2oklab(col[b]);
+    #endif
 
     // Simple blending
     fragColor.rgb = mix(col[c], col[b], a3);
@@ -172,8 +224,11 @@ void main()
     // Variance preserving blending
     vec3 ai = 1.-a3;
     vec3 espf = esp[b]*a3 + esp[c]*ai;
-    fragColor.rgb = espf + (col[b]*a3 + col[c]*ai - espf)/sqrt((a3*a3 + ai*ai));
+    // fragColor.rgb = espf + (col[b]*a3 + col[c]*ai - espf)/sqrt((a3*a3 + ai*ai));
 
+    #ifdef OKLAB_COLOR_BLENDING
+    fragColor.rgb = oklab2rgb(fragColor.rgb);
+    #endif
 
     if(false)
     switch(int(uv.x*4.0))
