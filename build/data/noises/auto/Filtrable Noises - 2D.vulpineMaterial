@@ -1,0 +1,7 @@
+"Filtrable Noises - 2D"
+:	"Filtrable Noises - 2D"
+	: uniforms 2D
+	: "data/noises/Filtrable Noises.frag"
+	: data/noises/noise2D.vert
+	;
+;

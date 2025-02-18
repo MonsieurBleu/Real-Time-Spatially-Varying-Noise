@@ -59,6 +59,8 @@ struct noiseResult
     vec3 normal;
 };
 
+float filteringApproximation = 0.f;
+
 noiseResult spikeNoise(vec2 uv, float size, float dist, float exageration, float seed)
 {
     noiseResult r;
@@ -101,6 +103,21 @@ noiseResult spikeNoise(vec2 uv, float size, float dist, float exageration, float
 
     r.result = smoothstep(e0, e1, delta*0.5);
 
+    r.result = mix(
+        r.result 
+        ,
+        clamp(
+            0.1 + 
+                0.5
+                *(1.0-dist)
+                * mix(i, 1.0, clamp(filteringApproximation*2.0, 0., 1.))
+            ,
+            0., 1.
+        )
+        , 
+        smoothstep(0.25, 1.0, filteringApproximation)
+        );
+
     return r;
 }
 
@@ -120,10 +137,20 @@ vec2 rotate(vec2 uv, vec2 c, float a)
 void main()
 {
     UV_PREPROCESS
-    
-    // auv.x += 2.0 * (cos(_iTime)*0.5 + 0.5);
 
-    // auv.x -= 2.0;
+    auv.x /= xrange.y * 0.5;     
+    auv.y /= yrange.y * 0.5;     
+
+    float sd = 0.5 + xrange.y * 3.0*(cos(_iTime)*0.5 + 0.5);
+
+    sd = 0.25;
+
+    // auv += vec2(cos(_iTime*PI*0.5), sin(_iTime*PI*0.5));
+    auv *= sd;
+    filteringApproximation = sqrt(sd*0.2);
+    filteringApproximation = smoothstep(0., 1., filteringApproximation);
+    filteringApproximation = clamp(filteringApproximation, 0., 1.);
+
 
     float size = 0.075;
 
@@ -152,7 +179,7 @@ void main()
     //     sum += parametrablePointNoise(nuv, 0.1, a, 5.0, 1.0);
     // }
 
-    for(int i = 0; i < 40; i++)
+    for(int i = 0; i < 16; i++)
     {
         float j = float(i);
         float exageration = 4.0;
@@ -167,23 +194,33 @@ void main()
         // // // sum += ppn;
         // sum = max(sum, ppn);
 
-        noiseResult s = spikeNoise(auv + size*SQR2*rand3to2(j.rrr), size, a, exageration, j);
-        if(s.result >= final.result)
-        {
-            final = s;
-        }
+        noiseResult s = spikeNoise(auv + size*SQR2*(0.5 - rand3to2(j.rrr))*vec2(j+_iTime), size, a, exageration, j);
+        // if(s.result >= final.result)
+        // {
+        //     final = s;
+        // }
+
+        // final.result = max(final.result, s.result);
+        final.result += s.result;
+        final.normal = max(final.normal, s.normal);
+        // final.result += sin(s.result);
     }
 
-    final.result *= 0.9;
-    final.result += smoothstep(0.5, 1., 1.0-a)*0.2;
+    final.normal = normalize(final.normal);
+
+    // final.result = smoothstep(0.9, 1.0, final.result);
+
+    // final.result *= 0.9;
+    // final.result += smoothstep(0.5, 1., 1.0-a)*0.2;
     // final.result = smoothstep(0., 1., final.result);
 
 
-    float ld = dot(final.normal, normalize(vec3(cos(_iTime), sin(_iTime), 1)));
+    // float ld = dot(final.normal, normalize(vec3(cos(_iTime), sin(_iTime), 1)));
+    float ld = dot(final.normal, normalize(vec3(1, 0.5, 0.5)));
     // fragColor.b = 0.0;
-    fragColor.g = 0.1 + ld.r;
+    fragColor.rgb = 0.1 + ld.rrr;
 
-    fragColor.rgb = final.normal * 0.5 + 0.5;
-    fragColor.rgb = final.result.rrr;
-
+    // fragColor.rgb = final.normal * 0.5 + 0.5;
+    // fragColor.rgb = final.result.rrr;
+    fragColor.rgb = hsv2rgb(vec3(min(final.result, 0.75), final.result, 1.));
 }

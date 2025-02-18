@@ -94,7 +94,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         , WidgetRenderInfos()
     );
 
-    noiseView->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 0));
+    noiseView->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
 
     auto noiseViewPTR = noiseView.get();
 
@@ -178,8 +178,39 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         , WidgetBox()
         , WidgetStyle()
             .setautomaticTabbing(2)
-        , EntityGroupInfo({noiseView, histparent})
+        , EntityGroupInfo({noiseView, 
+            histparent
+        })
         );
+    
+        
+    Entity *parentPTR = parent.get();
+    Entity *histparentPTR = histparent.get();
+    
+    // histparentPTR->comp<WidgetState>().status = ModelStatus::HIDE;
+
+    noiseView->set<WidgetButton>(
+        WidgetButton(
+            WidgetButton::Type::CHECKBOX,
+            [parentPTR, histparentPTR ](Entity *e, float f)
+            {
+                auto &ws = parentPTR->comp<WidgetStyle>();
+                
+                ws.setautomaticTabbing(ws.automaticTabbing ? 0 : 2);
+                
+                histparentPTR->comp<WidgetState>().statusToPropagate = ws.automaticTabbing ? ModelStatus::SHOW : ModelStatus::HIDE;
+
+                // histparentPTR->comp<WidgetState>().statusToPropagate
+
+                // histparentPTR->comp<WidgetState>().status = ModelStatus::HIDE;
+
+                NOTIF_MESSAGE(ws.automaticTabbing);
+
+                e->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
+            },
+            [](Entity *e){return 0.f;}
+        )
+    );
 
     return parent;
 }
