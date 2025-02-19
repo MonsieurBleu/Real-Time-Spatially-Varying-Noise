@@ -35,7 +35,7 @@ float parametrablePointNoise2(vec2 uv, float size, float dist, float exageration
 float getE1(vec2 uv, float size, float dist, float exageration, float seed)
 {
     // return 2.0 + cos(_iTime);
-    // return .1;
+    // return 1.0;
 
     vec2 c = round(uv/size)*size;
     c += (rand3to2(vec3(c.xy, seed))*2.0 - 1.0)*size*0.25;
@@ -74,7 +74,7 @@ void main()
     float a = cos(_iTime)*0.5 + 0.5;
     a = clamp(((auv.x + 0.25)), 0, 1);
 
-    // a = 1.0;
+    // a = 0.0;
 
     float n;
     for(float j = 0; j < 4.; j++)
@@ -98,9 +98,8 @@ void main()
         {
             vec2 off = vec2(mi, mj);
             float e1 = getE1(juv + s*off, s, a, 5.0, j);
-            float ie1 = 1./e1;
             float r2 = 1. - min(e1, 1.);
-            dn += (PI/48.)*(ie1 - r2*r2*(ie1-1.));
+            dn += (PI/48.)*(1. - r2*r2)/e1;
         }
         dn /= (l+l+1.)*(l+l+1.);
 
@@ -123,7 +122,7 @@ void main()
         // if(false)
         if(cos(_iTime*3.0) > .0)
         {
-            n += parametrablePointNoise(juv, 0.1, a, 5.0, j);
+            n += parametrablePointNoise(juv, s, a, 5.0, j);
         }
         else
         {
