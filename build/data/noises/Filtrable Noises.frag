@@ -6,7 +6,7 @@ void main()
 {
     UV_PREPROCESS
 
-    // auv *= 0.5 + 15 * abs(cos(_iTime*0.5));
+    auv *= 0.5 + 15 * abs(cos(_iTime*0.5));
 
 
     fragColor.rgb = filtered_local_random_phase_noise(

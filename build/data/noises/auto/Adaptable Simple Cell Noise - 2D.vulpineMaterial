@@ -1,0 +1,7 @@
+"Adaptable Simple Cell Noise - 2D"
+:	"Adaptable Simple Cell Noise - 2D"
+	: uniforms 2D
+	: "data/noises/Adaptable Simple Cell Noise.frag"
+	: data/noises/noise2D.vert
+	;
+;
