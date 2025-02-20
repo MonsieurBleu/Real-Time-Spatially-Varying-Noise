@@ -67,7 +67,8 @@ void main()
 
     // auv *= 0.5 + 15 * abs(cos(_iTime*0.5));
 
-    // auv *= 0.25;
+    auv -= 2.0;
+    auv *= 0.25;
     // auv *= 2.0;
 
 
@@ -77,7 +78,7 @@ void main()
     // a = 0.0;
 
     float n;
-    for(float j = 0; j < 4.; j++)
+    for(float j = 0; j < 5.; j++)
     {
         vec3 r = rand3to3(j.rrr);
 
@@ -89,19 +90,41 @@ void main()
 
 
         float dn = 0.0;
+        float dw = 0.0;
 
         float s = 0.1;
 
-        int l = 1;
-        for(int mi = -l; mi <= l; mi++)
-        for(int mj = -l; mj <= l; mj++)
+        int l = 0;
+
+        l = int(3.5*(abs(cos(_iTime))));
+
+        if(l == 0)
+            dn = parametrablePointNoise(juv, s, a, 5.0, j);
+        else
         {
-            vec2 off = vec2(mi, mj);
-            float e1 = getE1(juv + s*off, s, a, 5.0, j);
-            float r2 = 1. - min(e1, 1.);
-            dn += (PI/48.)*(1. - r2*r2)/e1;
+            for(int mi = -l; mi <= l; mi++)
+            for(int mj = -l; mj <= l; mj++)
+            {
+                vec2 duv = juv + s*vec2(mi, mj);
+                float e1 = getE1(duv, s, a, 5.0, j);
+                float r2 = 1. - min(e1, 1.);
+                
+
+                vec2 c = round(duv/s)*s;
+                c += (rand3to2(vec3(c.xy, j))*2.0 - 1.0)*s*0.25;
+
+                /* TODO : utiliser des poids gaussien plutôt*/ 
+                float w = 1.0*l - distance(juv, c)/s;
+                w = clamp(w, 0., 1.);
+
+                dw += w;
+                dn += w*(PI/48.)*(1. - r2*r2)/e1;
+            }
+            dn /= dw;
         }
-        dn /= (l+l+1.)*(l+l+1.);
+
+
+        // dn /= (l+l+1.)*(l+l+1.);
 
         // dn += (PI/3.)*.25*.25*ie1;
         // dn += -(PI/3.)*(ie1 - 1.)*r2*r2;
@@ -117,10 +140,10 @@ void main()
         // dn += PI / (24. * getE1(juv + vec2(s, 0), s, a, 5.0, j));
         // dn += PI / (24. * getE1(juv + vec2(-s, 0), s, a, 5.0, j));
         // dn /= 9.;
-        /* TODO : utiliser des poids gaussien plutôt*/ 
+        
 
-        // if(false)
-        if(cos(_iTime*3.0) > .0)
+        if(false)
+        // if(cos(_iTime*3.0) > .0)
         {
             n += parametrablePointNoise(juv, s, a, 5.0, j);
         }
@@ -135,7 +158,7 @@ void main()
         // n = 1.0-e1;
     }
 
-    // n *= 8.0;
+    // n *= 7.0;
     
     fragColor.rgb = n.rrr;
 

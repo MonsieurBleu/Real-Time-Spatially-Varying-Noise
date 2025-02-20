@@ -305,6 +305,8 @@ void NoiseApp::mainloop()
         screenBuffer2D.bindTexture(0, 7);
         globals.drawFullscreenQuad();
 
+        // std::cout << globals.appTime.getDeltaMS() << "\n";
+
         /* Main loop End */
         mainloopEndRoutine();
     }

@@ -204,7 +204,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
 
                 // histparentPTR->comp<WidgetState>().status = ModelStatus::HIDE;
 
-                NOTIF_MESSAGE(ws.automaticTabbing);
+                // NOTIF_MESSAGE(ws.automaticTabbing);
 
                 e->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
             },
