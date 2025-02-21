@@ -3,7 +3,7 @@
 float lsmoothstep(float edge0, float edge1, float x)
 {
     float t;  /* Or genDType t; */
-    t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    t = clamp((x - edge0) / (edge1 - edge0), 0., 1.);
     return t;
 }
 
@@ -67,98 +67,98 @@ void main()
 
     // auv *= 0.5 + 15 * abs(cos(_iTime*0.5));
 
-    auv -= 2.0;
-    auv *= 0.25;
+    // auv -= 2.0;
     // auv *= 2.0;
+
+    float seed = 0.;
+    float exageration = 4.0;
 
 
     float a = cos(_iTime)*0.5 + 0.5;
-    a = clamp(((auv.x + 0.25)), 0, 1);
+    a = clamp(((auv.x*0.25 + 0.25)), 0, 1);
+    a = 0.0;
+
+    auv *= 2.5;
 
     // a = 0.0;
 
+    vec2[5] gridOff = vec2[5](
+        vec2(+.0, +.0)*SQR2,
+        vec2(+.5, +.5)*SQR2,
+        vec2(-.5, +.5)*SQR2,
+        vec2(+.5, -.5)*SQR2,
+        vec2(-.5, -.5)*SQR2
+    );
+
+    int l = 0;
+    // l = int(3.5*(abs(cos(_iTime))));
+    // l = 1;
+
     float n;
-    for(float j = 0; j < 5.; j++)
+    
+    for(int j = 0; j < 5; j++)
     {
-        vec3 r = rand3to3(j.rrr);
+        // vec3 r = rand3to3(j.rrr);
+        // vec2 juv = auv + SQR2*(r.xy - 0.5);
 
-        vec2 juv = auv + SQR2*(r.xy - 0.5);
+        vec2 juv = auv + gridOff[j];
+        // float intensity = mix(max(vulpineHash2to1(cuv, seed), 0.35), exageration, a);
 
-        // clamp(n, 0., 1.);
-        
+        float dn = 0.;
+        float dw = 0.;
 
 
-
-        float dn = 0.0;
-        float dw = 0.0;
-
-        float s = 0.1;
-
-        int l = 0;
-
-        l = int(3.5*(abs(cos(_iTime))));
 
         if(l == 0)
-            dn = parametrablePointNoise(juv, s, a, 5.0, j);
+        {
+            vec2 cuv = round(juv) + .25*vulpineHash2to2(round(juv), seed);
+            float intensity = mix(.35, exageration * smoothstep(-1., 1., a), vulpineHash2to1(cuv, seed) + a);
+
+            float dist = 1. - 4.*distance(juv, cuv);
+
+            // vec2 diff = juv - cuv;
+            // float dist = 1. - 16.*(diff.x*diff.x + diff.y*diff.y);
+
+            // dn += clamp(dist/intensity, 0., 1.);
+
+            dn += smoothstep(0., intensity, dist);
+        }
         else
         {
             for(int mi = -l; mi <= l; mi++)
             for(int mj = -l; mj <= l; mj++)
             {
-                vec2 duv = juv + s*vec2(mi, mj);
-                float e1 = getE1(duv, s, a, 5.0, j);
-                float r2 = 1. - min(e1, 1.);
+                vec2 duv = juv + vec2(mi, mj);
+                vec2 cuv = round(duv) + .25*vulpineHash2to2(round(duv), seed);
+                float intensity = mix(.35, exageration * smoothstep(-1., 1., a), vulpineHash2to1(cuv, seed) + a);
+
+                // float e1 = getE1(duv, 1.0, a, 5.0, j);
+
+
                 
 
-                vec2 c = round(duv/s)*s;
-                c += (rand3to2(vec3(c.xy, j))*2.0 - 1.0)*s*0.25;
+                // vec2 c = round(duv);
+                // c += (rand3to2(vec3(c.xy, j))*2.0 - 1.0)*0.25;
 
                 /* TODO : utiliser des poids gaussien plutôt*/ 
-                float w = 1.0*l - distance(juv, c)/s;
+                float w = 1.0*l - distance(juv, cuv);
                 w = clamp(w, 0., 1.);
 
                 dw += w;
-                dn += w*(PI/48.)*(1. - r2*r2)/e1;
+
+                float r2 = 1. - min(intensity, 1.);
+                dn += w * (PI/48.)*(1. - r2*r2)/intensity;
             }
             dn /= dw;
         }
 
-
-        // dn /= (l+l+1.)*(l+l+1.);
-
-        // dn += (PI/3.)*.25*.25*ie1;
-        // dn += -(PI/3.)*(ie1 - 1.)*r2*r2;
-
-
-        // dn += PI / (24. * getE1(juv, 0.1, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(s, s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(-s, s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(s, -s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(-s, -s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(0, s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(0, -s), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(s, 0), s, a, 5.0, j));
-        // dn += PI / (24. * getE1(juv + vec2(-s, 0), s, a, 5.0, j));
-        // dn /= 9.;
-        
-
-        if(false)
-        // if(cos(_iTime*3.0) > .0)
-        {
-            n += parametrablePointNoise(juv, s, a, 5.0, j);
-        }
-        else
-        {
-            n += dn;
-        }
-
-        // if(parametrablePointNoise(juv, 0.1, a, 5.0, j) <= 0.)
-        //     discard;
-
-        // n = 1.0-e1;
+        n += dn;
+        // n = max(n, dn);
     }
 
-    // n *= 7.0;
+    // n = smoothstep(0., 1., n);
+
+    // n *= 0.1;
     
     fragColor.rgb = n.rrr;
 
