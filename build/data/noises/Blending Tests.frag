@@ -2,16 +2,20 @@
 
 #include functions/OKLab.glsl
 
+#include functions/FiltrableNoises.glsl
+
 void main()
 {
     UV_PREPROCESS
 
-    // auv *= 0.5;
+    auv *= 1.5;
     // auv -= 1.0;
     // auv.x /= xrange.y * 0.5;
     // auv.y /= yrange.y * 0.5; 
 
-    const int n = 5;
+    // auv *= 0.25 + 5.*(0.5 + 0.5*cos(_iTime));
+
+    const int n = 7;
 
     float slice = 0.001 * pow(xrange.y, 4.0);
     float a = uv.x*(1.+slice) - slice*.5;
@@ -21,9 +25,11 @@ void main()
 
     a = clamp(a, 0., 1.);
 
-    int smoothStepLevel = 1;
+    int smoothStepLevel = 2;
     for(int i = 0; i < smoothStepLevel; i++)
         a = smoothstep(0., 1., a);
+
+    // a = 1.;
 
     // a = pow(a, .5);
 
@@ -65,11 +71,34 @@ void main()
     esp[4] = 0.5.rrr;
     var[4] = 0.0834.rrr;
 
+    float timec = _iTime;
+    vec2  F = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*cos(2.*.5*timec)));
+    vec2  O = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*sin(2.*.2*timec))*PI*2.);
+
+    // Filtered local random phase noise
+    col[5] = filtered_local_random_phase_noise(auv,5.,15,F, O).rrr*0.5 + 0.5;
+    // col[5] = filtered_local_random_phase_noise(auv,10.0,1,0.1*vec2(SQR3, E),0.1*vec2(PHI, SQR2)).rrr*0.5 + 0.5;
+    col[5] = clamp(col[5], vec3(0.), vec3(1.));
+    esp[5] = 0.5.rrr;
+    var[5] = 0.006.rrr;
+
+    // Filtered spike noise
+    col[6] = FilteredSpikeNoise(auv, 0.25, 17, 1., 10., 0., timec).rrr; 
+    col[6] = clamp(col[6], vec3(0.), vec3(1.));
+    esp[6] = 0.4.rrr;
+    var[6] = 0.12.rrr;
+
+
+    // fragColor.rgb = col[6];
+    // return;
+
     // int b = 2;
     // int c = 3;
 
-    int b = 3;
-    int c = 2;
+
+
+    int b = 6;
+    int c = 5;
 
     // col[b] = hsv2rgb(vec3(col[b].x*0.5 + 0.9, 2., 1.));
     // esp[b] = vec3(0.87, 0.69, 0.0);
@@ -130,7 +159,7 @@ void main()
         priority2[c] = - priority2[b];
 
         // priority1[c] = 1 - priority1[c];
-        // priority1[b] = 1 - priority1[b];
+        priority1[b] = 1 - priority1[b];
 
         priority1[b] += 1.*pow(priority2[b], vec3(1.0));
         priority1[c] += 1.*pow(priority2[c], vec3(1.0));
@@ -154,8 +183,11 @@ void main()
 
         float timec = 0.1 + 0.5 + 0.5*cos(_iTime*1.0);
         vec2 f = vec2(1.0);
-        // timec = a;
-        timec = 0.01 + 2.0*timec;
+        timec = a;
+        // timec = 0.01 + 2.0*timec;
+        // timec = 1./max(1.-a, 1e-3);
+        // timec = clamp(timec, 1., 0.);
+        timec = 1.0;
         a3 = smoothstep(-f.x*timec, f.y*timec, (priority1[b] - priority1[c]));
 
         // a3 = smoothstep(priority1[c].x, priority1[b].x, 0.0).rrr;
@@ -204,10 +236,10 @@ void main()
     // a3 = a.rrr;
 
 
-    col[c] = hsv2rgb(vec3(col[c].x*0.5 + 0.9, 2., 1.));
-    col[b] = hsv2rgb(vec3(col[b].x*0.3 - 0.7, col[b].y + 0.1, 1.));
-    col[c] = clamp(col[c], vec3(0), vec3(1));
-    col[b] = clamp(col[b], vec3(0), vec3(1));
+    // col[c] = hsv2rgb(vec3(col[c].x*0.5 + 0.9, 2., 1.));
+    // col[b] = hsv2rgb(vec3(col[b].x*0.3 - 0.7, col[b].y + 0.1, 1.));
+    // col[c] = clamp(col[c], vec3(0), vec3(1));
+    // col[b] = clamp(col[b], vec3(0), vec3(1));
     // col[c] = vec3(1, 1, 0);
     // col[b] = vec3(0, 1, 1);
 
