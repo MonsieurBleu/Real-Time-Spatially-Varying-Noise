@@ -60,6 +60,68 @@ float parametrablePointNoise(vec2 uv, float size, float dist, float exageration,
 }
 
 
+float FilteredSpikeNoise(vec2 uv, float res, int iterations, float alpha, float exageration, float seed)
+{
+    vec2[9] gridOff = vec2[9](
+        vec2(+.0, +.0),
+
+        vec2(+.5, +.5)*SQR2,
+        vec2(-.5, +.5)*SQR2,
+        vec2(+.5, -.5)*SQR2,
+        vec2(-.5, -.5)*SQR2,
+
+        vec2(+.5, +.0)*PI,
+        vec2(-.0, +.5)*PI,
+        vec2(+.0, -.5)*PI,
+        vec2(-.5, -.0)*PI
+    );
+
+    /* Average energy of the noise depending on alpha */
+    float avgNoise = alpha*alpha*float(iterations)*0.06;
+    alpha = 1. - alpha;
+
+    uv /= res;
+
+    float filterD = length(max(dFdx(uv), dFdy(uv)));
+    float filterLevel = filterD*3.;
+
+    float fullResNoise = 0.;
+    float filteredNoise = 0.;
+
+    for(int i = 0; i < iterations; i++)
+    {
+        float dn = 0.;
+        float dw = 0.;
+
+        vec2 iuv = uv + gridOff[i];
+
+        for(int mi = -1; mi <= 1; mi++)
+        for(int mj = -1; mj <= 1; mj++)
+        {
+            vec2 duv = iuv + vec2(mi, mj);
+            vec2 cuv = round(duv) + .25*vulpineHash2to2(round(duv), seed);
+            float intensity = mix(.35, exageration * smoothstep(-1., 1., alpha), vulpineHash2to1(cuv, seed) + alpha);
+
+            /* Full Res Noise Calculation */
+            if(mj == 0 && mi == 0)
+                fullResNoise += smoothstep(0., intensity, 1. - 4.*distance(duv, cuv));
+            
+            /* Cell's approximate average energy */
+            float w = clamp(1. - distance(iuv, duv), 1., 0.);
+            dw += w;
+            float r2 = 1. - min(intensity, 1.);
+            dn += w * (PI/48.)*(1. - r2*r2)/intensity;
+        }
+
+        filteredNoise += dn / dw;
+    }
+    /* Mix between LOD 1 and LOD 2 */
+    filteredNoise = mix(filteredNoise, avgNoise, smoothstep(5., 24., filterLevel));
+
+    /* Final mix between full res noise and filtered version */
+    return mix(fullResNoise, filteredNoise, smoothstep(0., 1., filterLevel));
+}
+
 
 void main()
 {
@@ -80,23 +142,50 @@ void main()
 
     auv *= 2.5;
 
+    auv *= 1.0 + 200.f*(cos(_iTime)*0.5 + 0.5);
+
+
+    fragColor.rgb = FilteredSpikeNoise(auv, 1.0, 9, 1.-a, exageration, seed).rrr;
+    return;
+
+
+    // auv *= 1e3;
+
+    // a = gradientNoise(auv*10.0);
+
     // a = 0.0;
 
-    vec2[5] gridOff = vec2[5](
+    vec2[9] gridOff = vec2[9](
         vec2(+.0, +.0)*SQR2,
+
         vec2(+.5, +.5)*SQR2,
         vec2(-.5, +.5)*SQR2,
         vec2(+.5, -.5)*SQR2,
-        vec2(-.5, -.5)*SQR2
+        vec2(-.5, -.5)*SQR2,
+
+        vec2(+.5, +.0)*PI,
+        vec2(-.0, +.5)*PI,
+        vec2(+.0, -.5)*PI,
+        vec2(-.5, -.0)*PI
     );
 
     int l = 0;
-    // l = int(3.5*(abs(cos(_iTime))));
-    // l = 1;
-
-    float n;
     
-    for(int j = 0; j < 5; j++)
+    float n;
+
+    float filterD = length(max(dFdx(auv), dFdy(auv)));
+    float filterLevel = filterD*3.;
+    l = clamp(int(round(filterLevel)), 1, 1);
+
+    
+    int it = 9;
+
+    float fullResNoise = 0.;
+    float filteredNoise = 0.;
+    float avgNoise = (1. - a)*(1. - a)*float(it)*0.06;
+
+
+    for(int j = 0; j < it; j++)
     {
         // vec3 r = rand3to3(j.rrr);
         // vec2 juv = auv + SQR2*(r.xy - 0.5);
@@ -107,9 +196,7 @@ void main()
         float dn = 0.;
         float dw = 0.;
 
-
-
-        if(l == 0)
+        if(l == 1)
         {
             vec2 cuv = round(juv) + .25*vulpineHash2to2(round(juv), seed);
             float intensity = mix(.35, exageration * smoothstep(-1., 1., a), vulpineHash2to1(cuv, seed) + a);
@@ -121,9 +208,9 @@ void main()
 
             // dn += clamp(dist/intensity, 0., 1.);
 
-            dn += smoothstep(0., intensity, dist);
+            fullResNoise += smoothstep(0., intensity, dist);
         }
-        else
+        // else
         {
             for(int mi = -l; mi <= l; mi++)
             for(int mj = -l; mj <= l; mj++)
@@ -152,9 +239,15 @@ void main()
             dn /= dw;
         }
 
-        n += dn;
-        // n = max(n, dn);
+        filteredNoise += dn;
     }
+
+    filteredNoise = mix(filteredNoise, avgNoise, smoothstep(5., 24., filterLevel));
+    n = mix(fullResNoise, filteredNoise, smoothstep(0., 1., filterLevel));
+
+    // n = fullResNoise;
+
+    // n += 0.2;
 
     // n = smoothstep(0., 1., n);
 
