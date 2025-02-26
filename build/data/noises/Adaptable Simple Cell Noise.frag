@@ -12,7 +12,7 @@ void main()
     // auv *= 2.0;
 
     float seed = 0.;
-    float exageration = 1.0;
+    float exageration = 1.;
 
 
     // a = 0.0;
@@ -25,9 +25,17 @@ void main()
     a = clamp(((auv.x*0.25 + 0.25)), 0, 1);
     // a = gradientNoise(auv*10.0);
 
+    float timec = _iTime;
+    // timec = 0.1;
+    // vec2  F = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*cos(2.*.5*timec)));
+    // vec2  O = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*sin(2.*.2*timec))*PI*2.);
+    // // Filtered local random phase noise
+    // a = filtered_local_random_phase_noise(auv*4.,5.,15,F, O);
+
+    // a = clamp(1. - a, 0., 1.);
 
 
-    fragColor.rgb = FilteredSpikeNoise(auv, 1., 8, a, exageration, seed, _iTime).rrr;
+    fragColor.rgb = .5*FilteredSpikeNoise(auv, 1., 17, a, exageration, seed, timec).rrr;
     // fragColor.rgb += a*0.5;
     return;
 
