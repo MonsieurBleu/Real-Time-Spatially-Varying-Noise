@@ -4,6 +4,8 @@
 
 #include functions/FiltrableNoises.glsl
 
+
+
 float getPriority(
     float val,
     float avg,
@@ -20,8 +22,8 @@ float getPriority(
     // maxV = 1.;
     // minV = 0.;
 
-    // maxV = (avg + s)*(1. - s) + s;
-    // minV = (avg - s)*(1. - s);
+    // maxV = (avg + s);
+    // minV = (avg - s);
 
     return clamp((val-minV)/(maxV-minV), 0., 1.);
 
@@ -71,6 +73,8 @@ float PPM_MixMax(
 
     sharpness = clamp(1.-sharpness, 1e-6, 1.);
 
+
+    // return linearstep(-sharpness, +sharpness, priority1-priority2);
     return smoothstep(-sharpness, +sharpness, priority1-priority2);
 }
 
@@ -106,7 +110,7 @@ void main()
 {
     UV_PREPROCESS
 
-    // auv *= 0.5;
+    // auv *= 2.;
     // auv -= 1.0;
     // auv.x /= xrange.y * 0.5;
     // auv.y /= yrange.y * 0.5; 
@@ -114,7 +118,7 @@ void main()
 
     const int n = 7;
 
-    auv *= 0.5 + 50.*(0.5 + 0.5*cos(_iTime));
+    // auv *= 0.5 + 50.*(0.5 + 0.5*cos(_iTime));
     
     float slice = 0.001 * pow(xrange.y, 4.0);
     // float a = (auv.x + .5)*(1.+slice) - slice*.5;
@@ -124,19 +128,20 @@ void main()
     // a = cnoise(auv*2).r*3.;
     // a = gradientNoise(auv*0.5);
 
-    {
-        auv *= pow(xrange.y, .5);
-        // auv *= xrange.y;
-        // auv *= xrange.y;
+    auv *= pow(xrange.y, .5);
 
-        float timec = 0.1;
-        vec2  F = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*cos(2.*.5*timec)));
-        vec2  O = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*sin(2.*.2*timec))*PI*2.);
-        // Filtered local random phase noise
-        a = filtered_local_random_phase_noise(auv*.5,5.,15,F, O)*.5 + .5;
+    // {
+    //     // auv *= xrange.y;
+    //     auv *= pow(xrange.y, 2.);
 
-        a = clamp(a, 0., 1.);
-    }
+    //     float timec = 0.1;
+    //     vec2  F = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*cos(2.*.5*timec)));
+    //     vec2  O = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*sin(2.*.2*timec))*PI*2.);
+    //     // Filtered local random phase noise
+    //     a = filtered_local_random_phase_noise(auv*.5,5.,15,F, O)*.5 + .5;
+
+    //     a = clamp(a, 0., 1.);
+    // }
 
     a = clamp(a, 0., 1.);
 
@@ -145,7 +150,8 @@ void main()
         a = smoothstep(0., 1., a);
 
 
-    // a = 1.;
+    // a = cos(_iTime*0.5)*.25 + .5;
+   
 
     // a = pow(a, .5);
 
@@ -186,7 +192,7 @@ void main()
     var[4] = 0.0834.rrr;
 
     float timec = _iTime;
-    timec = 1.;
+    // timec = 1.;
     vec2  F = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*cos(2.*.5*timec)));
     vec2  O = 0.5*vec2( 0.1, 0.1+ (0.5+0.5*sin(2.*.2*timec))*PI*2.);
 
@@ -205,6 +211,7 @@ void main()
     // a = 1.;
     alpha = 1.;
     // alpha = col[1].r;
+
     col[6] = FilteredSpikeNoise(auv, 0.25, 17, alpha, 4., 0., timec).rrr; 
     col[6] = clamp(col[6], vec3(0.), vec3(1.));
     esp[6] = 0.7.rrr*alpha*alpha;
@@ -224,17 +231,49 @@ void main()
     int b = 6;
     int c = 5;
 
+    // a = 0.5;
+
+    /*
+        MB1     MB2     EB1     EB2   | A       MMM     EMM
+
+
+        ************ MixMaxBlending_INVERT_SECOND ***********
+
+                                            ==> 0.5     0.006
+        0.7     0.5     0.12    0.006 | 0.25    0.5     0.01
+        0.7     0.5     0.12    0.006 | 0.5     0.7     0.06
+        0.7     0.5     0.12    0.006 | 0.75    0.7     0.12
+                                            ==> 0.7     0.12
+
+        0.7     0.5     0.12    0.006 | 0.3     0.53    0.02
+        0.7     0.5     0.12    0.006 | 0.1     0.5     0.006
+
+        0.7     0.5     0.12    0.006 | 0.7     0.7     0.12
+        0.7     0.5     0.12    0.006 | 1.0     0.7     0.12
+
+
+        ************ MixMaxBlending_INVERT_FIRST ***********
+
+                                            ==> 0.5     0.006
+        0.7     0.5     0.12    0.006 | 0.25    0.5     0.006
+        0.7     0.5     0.12    0.006 | 0.5     0.5     0.03
+        0.7     0.5     0.12    0.006 | 0.75    0.66    0.12
+                                            ==> 0.7     0.12
+    */
+
     col[b] = clamp(col[b], vec3(0.), vec3(1.));
     col[c] = clamp(col[c], vec3(0.), vec3(1.));
+
+    // a = (a-0.5)*0.5 + 0.5;
 
     vec3 a3 = Filtered_PPM_MixMax(
         col[b].r, esp[b].r, var[b].r,
         col[c].r, esp[c].r, var[c].r,
         // col[b].x/esp[b].x < col[c].x/esp[c].x
 
-        MixMaxBlending_INVERT_NONE, 
+        MixMaxBlending_INVERT_SECOND, 
         
-        .25, a,
+        .5, a,
 
         derivative(auv*300.)*.25
     ).rrr;
@@ -257,12 +296,13 @@ void main()
     // col[b] = hsv2rgb(vec3(col[b].x*0.3 - 0.7, col[b].y + 0.1, 1.));
     // col[c] = clamp(col[c], vec3(0), vec3(1));
     // col[b] = clamp(col[b], vec3(0), vec3(1));
-    col[c] *= vec3(1.5, 0, 0);
-    col[b] *= vec3(0, 0, 1);
+
+    col[c] *= 1.5*vec3(1, 0.5, 0);
+    col[b] *= 1.3*vec3(0, 0.6, 1);
 
     // a3 = a.rrr;
 
-    #define OKLAB_COLOR_BLENDING
+    // #define OKLAB_COLOR_BLENDING
     
     #ifdef OKLAB_COLOR_BLENDING
     col[c] = rgb2oklab(col[c]);
