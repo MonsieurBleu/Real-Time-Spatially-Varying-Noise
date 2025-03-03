@@ -12,6 +12,9 @@ float getPriority(
     float var
 )
 {
+    // return (val - avg)/(var*4.) + .5;
+    return clamp((val - avg)/(var*4.) + .5, 0., 1.);
+
     // var *= 10.0;
     float s = sqrt(var);
     // return clamp((val - avg + s + avg*s - var)/(s + s + s - var - var), 0., 1.);
@@ -19,14 +22,11 @@ float getPriority(
     float maxV = mix(avg + s, 1., s);
     float minV = mix(avg - s, 0., s);
 
-    // maxV = 1.;
-    // minV = 0.;
+    maxV = (avg + 2.*s);
+    minV = (avg - 2.*s);
 
-    // maxV = (avg + s);
-    // minV = (avg - s);
 
     return clamp((val-minV)/(maxV-minV), 0., 1.);
-
 }
 
 #define MixMaxBlending_INVERT_BOTH -1
@@ -68,14 +68,19 @@ float PPM_MixMax(
         default : break;
     }
     
-    priority1 += 2.*(alpha - .5);
-    priority2 += 2.*(.5 - alpha);
+    // priority1 += 2.*(alpha - .5);
+    // priority2 += 2.*(.5 - alpha);
 
     sharpness = clamp(1.-sharpness, 1e-6, 1.);
 
+    float l = 2. * 1.1498268;
+    // 1.414213562373095
 
+    l = log(10.) - 0.002;
+    l = tan(radians(66.5)) - 0.0001;
+    
     // return linearstep(-sharpness, +sharpness, priority1-priority2);
-    return smoothstep(-sharpness, +sharpness, priority1-priority2);
+    return smoothstep(-sharpness, +sharpness, priority1-priority2 + l*(alpha - .5));
 }
 
 float Filtered_PPM_MixMax(
@@ -123,6 +128,8 @@ void main()
     float slice = 0.001 * pow(xrange.y, 4.0);
     // float a = (auv.x + .5)*(1.+slice) - slice*.5;
     float a = uv.x*(1.+slice) - slice*.5;
+
+    // a = 1.;
 
     // a = cos(auv.x*5.)*0.5 + 0.5;
     // a = cnoise(auv*2).r*3.;
@@ -228,10 +235,10 @@ void main()
 
 
 
-    int b = 6;
-    int c = 5;
+    int b = 1;
+    int c = 3;
 
-    // a = 0.5;
+    a = 0;
 
     /*
         MB1     MB2     EB1     EB2   | A       MMM     EMM
@@ -267,13 +274,14 @@ void main()
     // a = (a-0.5)*0.5 + 0.5;
 
     vec3 a3 = Filtered_PPM_MixMax(
-        col[b].r, esp[b].r, var[b].r,
-        col[c].r, esp[c].r, var[c].r,
+        col[b].r, esp[b].r, sqrt(var[b].r),
+        col[c].r, esp[c].r, sqrt(var[c].r),
+        
         // col[b].x/esp[b].x < col[c].x/esp[c].x
 
-        MixMaxBlending_INVERT_SECOND, 
+        MixMaxBlending_INVERT_FIRST, 
         
-        .5, a,
+        .85, a,
 
         derivative(auv*300.)*.25
     ).rrr;
@@ -297,8 +305,11 @@ void main()
     // col[c] = clamp(col[c], vec3(0), vec3(1));
     // col[b] = clamp(col[b], vec3(0), vec3(1));
 
-    col[c] *= 1.5*vec3(1, 0.5, 0);
-    col[b] *= 1.3*vec3(0, 0.6, 1);
+    // col[c] *= 1.5*vec3(1, 0.5, 0);
+    // col[b] *= 1.3*vec3(0, 0.6, 1);
+
+    // col[c] = vec3(1, 0, 0);
+    // col[b] = vec3(0, 1, 0);
 
     // a3 = a.rrr;
 
@@ -322,6 +333,11 @@ void main()
     #endif
 
     // int i = int(uv.y*n);
-    // fragColor.rgb = getPriority(col[i].x, esp[i].x, var[i].x).rrr;
+    // if(xrange.y > 2.)
+    //     fragColor.rgb = col[i];
+    // else
+    //     fragColor.rgb = getPriority(col[i].x, esp[i].x, var[i].x).rrr;
 
+    fragColor.r = 0.;
+    if(a3.r > 1e-6) fragColor.rgb = vec3(1, 0, 0);
 }
