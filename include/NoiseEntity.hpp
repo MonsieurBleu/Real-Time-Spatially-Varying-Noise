@@ -19,8 +19,12 @@ struct WidgetRenderInfos
 {
     vec3 hist[256];
     vec3 avg = vec3(0);
-    vec3 esp = vec3(0);
+    vec3 dev = vec3(0);
     vec3 var = vec3(0);
+
+    vec3 med = vec3(0);
+    vec3 l8th = vec3(0);
+    vec3 h8th = vec3(0);
 };
 
 Adaptive_Component(WidgetRenderInfos)

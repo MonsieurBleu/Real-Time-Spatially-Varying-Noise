@@ -119,7 +119,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
             , EntityGroupInfo({
                 newEntity(materialName + " - Histogram View"
                     , UI_BASE_COMP
-                    , WidgetSprite(PlottingHelperRef(new PlottingHelper(color, 254)))
+                    , WidgetSprite(PlottingHelperRef(new PlottingHelper(color, 256)))
                     , WidgetBox(
                         [noiseViewPTR, i](Entity *parent, Entity *child)
                         {
@@ -132,8 +132,12 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
                             for(int j = 0; j < 256; j++)
                             {
                                 float v = rinfos.hist[j][i];
+                                
+                                // if(j == 0 || j == 1 || j == 255 || j == 254) v = 0.f;
+                                
                                 p->push(v);
                                 p->maxv = max(v, p->maxv);
+                                // p->maxv = .;
                             }
 
                             p->updateData();
@@ -143,26 +147,16 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
                 newEntity(materialName + " - Scalar Stats View"
                     , UI_BASE_COMP
                     , WidgetBox()
-                    , WidgetStyle().setautomaticTabbing(4)
+                    , WidgetStyle().setautomaticTabbing(6)
                     , EntityGroupInfo({
-                        VulpineBlueprintUI::ColoredConstEntry("AVG", 
-                            [noiseViewPTR, i]()
-                            {
-                                return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().avg[i], 5);
-                            }                        
-                        ),
-                        // VulpineBlueprintUI::ColoredConstEntry("ESP", 
-                        //     [noiseViewPTR, i]()
-                        //     {
-                        //         return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().esp[i], 5);
-                        //     }                        
-                        // ),
-                        VulpineBlueprintUI::ColoredConstEntry("VAR", 
-                            [noiseViewPTR, i]()
-                            {
-                                return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().var[i], 5);
-                            }
-                        )
+                        VulpineBlueprintUI::ColoredConstEntry("Esperance",  [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().avg[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("Variance",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().var[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("Deviation",  [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().dev[i], 5);}),
+
+                        VulpineBlueprintUI::ColoredConstEntry("Median",     [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().med[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("Low 8th",    [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().l8th[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("High 8th",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().h8th[i], 5);}),
+                        
                     })
                 )
             })

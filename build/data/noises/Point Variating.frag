@@ -222,5 +222,5 @@ void main()
 
     // fragColor.rgb = final.normal * 0.5 + 0.5;
     // fragColor.rgb = final.result.rrr;
-    fragColor.rgb = hsv2rgb(vec3(min(final.result, 0.75), final.result, 1.));
+    fragColor.rgb = hsv2rgb(vec3(min(final.result, 0.75), final.result, cos(final.result - .5)*.5 +.5));
 }

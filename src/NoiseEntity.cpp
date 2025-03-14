@@ -29,34 +29,58 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     const int size = (pmax.x-pmin.x)*(pmax.y-pmin.y);
     const float isize = 1.0/(float)(size);
 
+    // const std::vector<u8vec3> sortedPixels(size);
+
     for(auto &i : rinfo.hist)
         i = vec3(0);
 
-    for(int x = pmin.x+1; x < pmax.x-1; x++)
-    for(int y = pmin.y+1; y < pmax.y-1; y++)
+    for(int x = pmin.x; x < pmax.x; x++)
+    for(int y = pmin.y; y < pmax.y; y++)
     {
         int id = y*screen2Dres.x + x;
-        // int id = x*screen2Dres.y + y;
         u8vec3 c = screen2D[id];
-
-        // NOTIF_MESSAGE(c);
 
         sum += c;
 
         for(int i = 0; i < 3; i++)
-        {
-            // NOTIF_MESSAGE(vec3(c));
-            // NOTIF_MESSAGE(vec3(screen2D[10, 10]));
             rinfo.hist[c[i]][i] += 1;
+        
+        // sortedPixels[cnt++] = c;
+    }
+
+    vec3 cnt(0);
+    rinfo.h8th = vec3(-1);
+    rinfo.l8th = vec3(-1);
+    rinfo.med = vec3(-1);
+
+    for(int i = 0; i < 256; i++)
+    {
+        rinfo.hist[i] *= isize;
+
+        cnt += rinfo.hist[i];
+        for(int j = 0; j < 3; j++)
+        {
+            if(rinfo.l8th[j] == -1.f && cnt[j] >= 1.f/8.f)
+                rinfo.l8th[j] = float(i)/255.;
+
+            if(rinfo.h8th[j] == -1.f && cnt[j] >= 7.f/8.f)
+                rinfo.h8th[j] = float(i)/255.;
+
+            if(rinfo.med[j] == -1.f && cnt[j] >= .5)
+                rinfo.med[j] = float(i)/255.;
         }
     }
 
-    for(auto &i : rinfo.hist)
-        i *= isize;
+    // if(globals.appTime.getUpdateCounter()%256 == 0)
+    // {
+    //     NOTIF_MESSAGE("255 : " << rinfo.hist[255]);
+    //     NOTIF_MESSAGE("127 : " << rinfo.hist[127]);
+    //     NOTIF_MESSAGE("0 : " << rinfo.hist[0]);
+    // }
 
     rinfo.avg = vec3(sum) * isize / 255.f;
 
-    rinfo.esp = vec3(0);
+    rinfo.dev = vec3(0);
     rinfo.var = vec3(0);
 
     for(int x = pmin.x; x < pmax.x; x++)
@@ -64,14 +88,14 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     {
         int id = y*screen2Dres.x + x;
         u8vec3 c = screen2D[id];
-        rinfo.esp += vec3(c) * vec3(rinfo.hist[c.x].x, rinfo.hist[c.y].y, rinfo.hist[c.z].z);
+        // rinfo.esp += vec3(c) * vec3(rinfo.hist[c.x].x, rinfo.hist[c.y].y, rinfo.hist[c.z].z);
 
         vec3 d = (vec3(c) / 255.f) - rinfo.avg;
         rinfo.var += d*d;
     }
 
-    rinfo.esp *= isize / 255.f;
     rinfo.var *= isize;
+    rinfo.dev = sqrt(rinfo.var);
 
     // NOTIF_MESSAGE(pmin.x << " " << pmax.x << " | " << pmin.y << " " << pmax.y);
     // NOTIF_MESSAGE(vec2(screen2Dres));

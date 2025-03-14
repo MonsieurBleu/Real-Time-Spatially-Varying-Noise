@@ -11,7 +11,7 @@ NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 void NoiseApp::init(int paramSample)
 {
     globals._renderScale = 1;
-    globals._UI_res_scale = 1;
+    globals._UI_res_scale = 2;
 
     App::init();
     loadAllAssetsInfos("data/");

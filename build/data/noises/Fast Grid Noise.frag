@@ -9,7 +9,7 @@ void main()
     // auv = round(auv);
 
     float seed = (_iTime);
-    seed = 0.1;
+    seed = 10;
 
     fragColor.rgb = vulpineHash2to3(auv, seed);
 }
