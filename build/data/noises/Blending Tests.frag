@@ -17,9 +17,10 @@ float cubicstep(float edge0, float edge1, float x)
     return clamp(t*t*t*4. + .5, 0., 1.);
 }
 
-#define P 2.5
-#define L 1.
-#define S P*2.
+float P = 2.5;
+float L = 1.;
+float S = P*2.;
+bool doLinearBlending = false;
 
 float getPriority(
     float val,
@@ -42,10 +43,10 @@ float getPriority(
 
 }
 
-#define MixMaxBlending_INVERT_BOTH -1
 #define MixMaxBlending_INVERT_NONE 0
 #define MixMaxBlending_INVERT_FIRST 1
 #define MixMaxBlending_INVERT_SECOND 2
+#define MixMaxBlending_INVERT_BOTH 3
 
 float PPM_MixMax(
     float noise1,
@@ -158,7 +159,7 @@ void main()
     auv.x /= xrange.y * 0.5;
     auv.y /= yrange.y * 0.5; 
 
-    vec2 gridDim = vec2(2, 10);
+    vec2 gridDim = vec2(4);
     vec2 gridPos = vec2(floor(uv*gridDim)/(gridDim-1.));
     vec2 cellUV = (uv-gridPos*(1. - 1./gridDim))*(gridDim);
 
@@ -172,24 +173,50 @@ void main()
     {
         fragColor.rgb = vec3(1); return;
     }
+    if(
+        cellUV.x > (.99 - borderEpsilon.x) ||
+        cellUV.y > (.99 - borderEpsilon.y) ||
+        cellUV.x < 0.01 + borderEpsilon.x ||
+        cellUV.y < 0.01 + borderEpsilon.y
+    )
+    {
+        fragColor.rgb = vec3(0); return;
+    }
 
-    cellUV /= gridDim;
-    CorrectUV(cellUV, scale);
-    auv = cellUV;
+    float slice = 0.1;
+    float a = (cellUV.x)*(1.+slice) - slice*.5;
+    // cellUV /= gridDim;
+    vec2 cellUVAR = cellUV;
+    CorrectUV(cellUVAR, scale);
+    auv = cellUVAR;
 
     /**** Cells changement pressets ****/
 
-    float smoothness = gridPos.y*4.;
+    // auv /= gridPos.x*.75 + 0.1;
+    auv /= 2;
+    // a = 0.25 + gridPos.y*0.5;
+    // P = gridPos.x*4.;
+
+    // doLinearBlending = gridPos.x == 0;
+
+    float smoothness = gridPos.y;
+    // smoothness = 0.1;
+
+    int blendingMode = int(round(gridPos.x*3));
+    // blendingMode = MixMaxBlending_INVERT_BOTH;
 
 
-
+    // if(a > 1. || a < 0.)
+    // {
+    //     fragColor.rgb = vec3(0, 0, 1); return;
+    // }
+    // fragColor.rgb = a.rrr; return;
 
 
     // if(auv)
     // fragColor.rg = auv;
     // return; 
 
-    // auv /= 5.;
     // auv -= 1.0;
 
 
@@ -197,10 +224,6 @@ void main()
 
     // auv *= 0.5 + 50.*(0.5 + 0.5*cos(_iTime));
     
-    float slice = 0.001;
-    // slide *= pow(xrange.y, 4.0);
-    // float a = (auv.x + .5)*(1.+slice) - slice*.5;
-    float a = cellUV.x*(1.+slice) - slice*.5;
 
     // a = 1.;
 
@@ -298,13 +321,13 @@ void main()
     var[6] = 0.12.rrr;
 
 
-    col[7] = pow(filtered_local_random_phase_noise(auv*5. + 1.,5.,15,F, O)*0.5 + 0.5, .25).rrr;
+    col[7] = pow(filtered_local_random_phase_noise(auv*5. + 1.,5.,15,F, O)*0.5 + 0.5, .5).rrr;
     // col[5] = filtered_local_random_phase_noise(auv,10.0,1,0.1*vec2(SQR3, E),0.1*vec2(PHI, SQR2)).rrr*0.5 + 0.5;
     // col[7] = clamp(col[7], vec3(0.), vec3(1.));
-    esp[7] = 0.83.rrr;
-    var[7] = 0.001.rrr;
+    esp[7] = 0.705.rrr;
+    var[7] = 0.003.rrr;
 
-    // fragColor.rgb = esp[6].rrr;
+    // fragColor.rgb = col[7].rrr;
     // return;
 
     // fragColor.rgb = col[5];
@@ -315,7 +338,7 @@ void main()
 
 
 
-    int b = 5;
+    int b = 1;
     int c = 3;
 
     /*
@@ -366,13 +389,17 @@ void main()
         
         // col[b].x/esp[b].x < col[c].x/esp[c].x
 
-        MixMaxBlending_INVERT_SECOND, 
+        // MixMaxBlending_INVERT_SECOND,
+        blendingMode, 
         
         // .0, 
         // smoothstep(0., 1., 1.-uv.y),
         smoothness,
         a
         ).rrr;
+
+    if(doLinearBlending)
+        a3 = a.rrr;
     
 
 
@@ -408,7 +435,6 @@ void main()
 
     // #define OKLAB_COLOR_BLENDING
 
-    // a3 = a.rrr;
 
     #ifdef OKLAB_COLOR_BLENDING
     col[c] = rgb2oklab(col[c]);
@@ -438,12 +464,24 @@ void main()
     // else
     //     fragColor.rgb = getPriority(col[i].x, esp[i].x, sqrt(var[i].x)).rrr * .5 + .5;
 
-    if(xrange.y > 2.)
+    // if(xrange.y > 2.)
+
+    if(cellUV.y > 0.75)
+    {
+        if(cellUV.y < 0.76)
+        {
+            fragColor.rgb = vec3(0); return;
+        }
+
         fragColor.rgb = mix(
             vec3(1)*(getPriority(col[c].x, esp[c].x, sqrt(var[c].x)) * .5 + .5),
             vec3(1)*(getPriority(col[b].g, esp[b].g, sqrt(var[b].g)) * .5 + .5),
             a3.r
         );
+
+        fragColor.rgb = a3;
+
+    }
 
     // fragColor.rgb = 0.0.rrr;
     // if(a3.r > 1e-6) fragColor.rgb = vec3(1, 0, 0);

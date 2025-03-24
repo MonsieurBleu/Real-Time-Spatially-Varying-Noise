@@ -3,8 +3,8 @@
 
 COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
 {
-    // if(globals.appTime.getUpdateCounter()%100 != 99)
-    //     return;
+    if(globals.appTime.getUpdateCounter()%10)
+        return;
 
     auto &box = child->comp<WidgetBox>();
     auto &rinfo = child->comp<WidgetRenderInfos>();

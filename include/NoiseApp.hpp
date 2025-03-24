@@ -24,6 +24,9 @@ private:
     void removeNoiseViewers();
     std::string currentNoise = "test - 2D";
 
+    bool doScreenshot = false;
+    bool doResize = false;
+
 public:
     
     static inline bool doAutomaticShaderRefresh = false;

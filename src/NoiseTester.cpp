@@ -10,6 +10,38 @@
 
 #define MLO Loader<MeshMaterial>::loadingInfos
 
+EntityRef SimpleFloatingText(
+    const std::string &name
+    )
+{
+    auto t = newEntity(name
+        , UI_BASE_COMP
+        , WidgetBox()
+        // , WidgetBackground()
+        , WidgetStyle()
+            .setbackGroundStyle(UiTileType::SQUARE_ROUNDED)
+            .setbackgroundColor1(VulpineColorUI::DarkBackgroundColor1)
+            .setbackgroundColor2(VulpineColorUI::DarkBackgroundColor2)
+            .settextColor1(VulpineColorUI::LightBackgroundColor1)
+            .settextColor2(VulpineColorUI::HightlightColor1)
+        , WidgetText(U"...")
+    );
+
+    t->set<WidgetButton>(WidgetButton(
+        WidgetButton::Type::TEXT_INPUT,
+        [](Entity *e, float v)
+        {
+        },
+        [](Entity *e)
+        {
+            return 0.f;
+        }
+    ));
+
+    return t;
+}
+
+
 void NoiseTester::createNoisesMaterials()
 {
     for (auto f : std::filesystem::recursive_directory_iterator("data/noises/"))
@@ -94,8 +126,44 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         , WidgetRenderInfos()
     );
 
-    noiseView->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
+    noiseView->comp<WidgetBox>().set(vec2(-1+textMargin*2., 1), vec2(-1, 1-textMargin*2.));
 
+    EntityRef rowsText;
+    EntityRef columnsText;
+
+    EntityRef noiseViewParent = newEntity(materialName + " - Noise View Parent"
+        , UI_BASE_COMP
+        , WidgetBox()
+        , EntityGroupInfo({
+            noiseView,
+            rowsText = newEntity("Rows Text"
+                , UI_BASE_COMP
+                , WidgetBox(vec2(-1, -1+textMargin*2.), vec2(-1, 1-textMargin*2.))
+                , WidgetStyle().setautomaticTabbing(1)
+            ),
+            columnsText = newEntity("Columns Text"
+                , UI_BASE_COMP
+                , WidgetBox(vec2(-1+textMargin*2., 1), vec2(1-textMargin*2., 1.))
+                , WidgetStyle().setautomaticTabbing(1)
+            )
+        })
+    );
+
+    for(int i = 0; i < 4; i++)
+    {
+        ComponentModularity::addChild(
+            *rowsText, 
+            SimpleFloatingText("entry")
+        );
+        
+        ComponentModularity::addChild(
+            *columnsText, 
+            SimpleFloatingText("entry")
+        );
+    }
+    rowsText->comp<WidgetStyle>().setautomaticTabbing(4);
+
+    auto noiseViewParentPTR = noiseViewParent.get();
     auto noiseViewPTR = noiseView.get();
 
     EntityRef histparent = newEntity(materialName +" - Histogram Parent View"
@@ -167,12 +235,14 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         );
     }
 
+
     EntityRef parent = newEntity(materialName +" - Parent View"
         , UI_BASE_COMP
         , WidgetBox()
         , WidgetStyle()
             .setautomaticTabbing(2)
-        , EntityGroupInfo({noiseView, 
+        , EntityGroupInfo({
+            noiseViewParent, 
             histparent
         })
         );
@@ -186,7 +256,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
     noiseView->set<WidgetButton>(
         WidgetButton(
             WidgetButton::Type::CHECKBOX,
-            [parentPTR, histparentPTR ](Entity *e, float f)
+            [parentPTR, histparentPTR, noiseViewParentPTR](Entity *e, float f)
             {
                 auto &ws = parentPTR->comp<WidgetStyle>();
                 
@@ -200,7 +270,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
 
                 // NOTIF_MESSAGE(ws.automaticTabbing);
 
-                e->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
+                noiseViewParentPTR->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
             },
             [](Entity *e){return 0.f;}
         )

@@ -6,12 +6,27 @@
 #include <Blueprint/EngineBlueprintUI.hpp>
 #include <NoiseTester.hpp>
 
+#include <stb/stb_image_write.h>
+
 NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
+
 
 void NoiseApp::init(int paramSample)
 {
     globals._renderScale = 1;
-    globals._UI_res_scale = 1.5;
+    globals._UI_res_scale = 2.;
+
+
+    VulpineColorUI::DarkBackgroundColor1 = vec4(1);
+    VulpineColorUI::DarkBackgroundColor2 = vec4(0.5, 0.75, 1., 1);
+
+    VulpineColorUI::LightBackgroundColor1 = vec4(0, 0, 0, 1);
+    VulpineColorUI::LightBackgroundColor2 = vec4(0, 0, 0, 0.5);
+
+    
+    VulpineColorUI::DarkBackgroundColor1Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor1), 1.);
+    VulpineColorUI::DarkBackgroundColor2Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor2), 1.);
+
 
     App::init();
     loadAllAssetsInfos("data/");
@@ -94,6 +109,14 @@ void NoiseApp::initInput()
         InputManager::addEventInput(
             "toggle auto shader refresh", GLFW_KEY_F6, 0, GLFW_PRESS, [&]() {
                 doAutomaticShaderRefresh = !doAutomaticShaderRefresh;
+            },
+            InputManager::Filters::always, false)
+    );
+
+    _inputs.push_back(&
+        InputManager::addEventInput(
+            "toggle auto shader refresh", GLFW_KEY_F2, 0, GLFW_PRESS, [&]() {
+                doResize = true;
             },
             InputManager::Filters::always, false)
     );
@@ -202,6 +225,10 @@ void NoiseApp::mainloop()
 
     addNoiseViewers();
 
+    
+
+
+
     // ComponentModularity::addChild(
     //     *rootEntity, 
     //     NoiseTester::noiseSprite(
@@ -243,6 +270,7 @@ void NoiseApp::mainloop()
             }
         }
 
+
         /* Retreiving the 2D scene RGB values */
         auto &screenTexture = screenBuffer2D.getTexture(0);
         screen2Dres = screenTexture.getResolution();
@@ -251,9 +279,47 @@ void NoiseApp::mainloop()
         screenTexture.bind(0);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, screen2D.data());
 
+
+        static vec2 windowsSizeTmp(1000);
+        static int screenshotFrameWait = 0;
+        if(doScreenshot)
+        {
+            screenshotFrameWait --;
+            if(!screenshotFrameWait)
+            {
+                stbi_flip_vertically_on_write(true);
+
+                stbi_write_png(
+                    ("results/" + currentNoise + ".png").c_str(),
+                    screen2Dres.x,
+                    screen2Dres.y,
+                    3,
+                    screen2D.data(), 
+                    0
+                );
+
+                glfwSetWindowSize(window, windowsSizeTmp.x, windowsSizeTmp.y);
+                rootEntity->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
+            }
+        }
+        if(doResize)
+        {
+            // resizeCallback(window, 2000, 1000);
+            rootEntity->comp<WidgetBox>().set(vec2(-3, 1), vec2(-1, 1));
+            glfwSetWindowSize(window, 1000, 1000);
+            doResize = false;
+            doScreenshot = true;
+            windowsSizeTmp = globals.windowSize();
+
+            screenshotFrameWait = 50;
+        }
+
+
+
+
         /* UI Update */
         WidgetUI_Context uiContext = WidgetUI_Context(&ui);
-        updateEntityCursor(globals.mousePosition(), globals.mouseLeftClickDown(), globals.mouseLeftClick(), VulpineBlueprintUI::UIcontext);
+        updateEntityCursor(globals.mousePosition(), globals.mouseLeftClickDown(), globals.mouseLeftClick(), VulpineBlueprintUI::UIcontext, false);
         ComponentModularity::synchronizeChildren(rootEntity);
         updateWidgetsStyle();
 
