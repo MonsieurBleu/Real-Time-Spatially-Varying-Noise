@@ -11,8 +11,14 @@ float usmoothstep(float edge0, float edge1, float x)
     return t * t * (3.0 - 2.0 * t);
 }
 
+float cubicstep(float edge0, float edge1, float x)
+{
+    float t = (x - edge0) / (edge1 - edge0) - .5;
+    return clamp(t*t*t*4. + .5, 0., 1.);
+}
+
 #define P 2.5
-#define L P*4.
+#define L 1.
 #define S P*2.
 
 float getPriority(
@@ -23,6 +29,7 @@ float getPriority(
 {
 
     // var = sqrt(var);
+    return clamp((val-avg)/(P*var), -1., 1.);
     return (val-avg)/(P*var);
 
     // return (val-avg)/(P*var);
@@ -31,7 +38,6 @@ float getPriority(
 
     float p = 1.75;
     return (val-avg)/(p*var);
-    // return clamp((val-avg)/(p*var), 0., 1.);
     // return smoothstep(-p*var, p*var, val - avg) - .5;
 
 }
@@ -78,7 +84,7 @@ float PPM_MixMax(
     // priority1 += 2.*(alpha - .5);
     // priority2 += 2.*(.5 - alpha);
 
-    sharpness = clamp(1.-sharpness, 1e-6, 1.);
+    // sharpness = clamp(1.-sharpness, 1e-6, 1.);
 
     /* Todo : investigate the magick number */
     float l = 2. * 1.1498268;
@@ -89,21 +95,50 @@ float PPM_MixMax(
 
     l = 2.144980073;
 
-    l = L;
+    l = L*4.;
 
-    // alpha = 1.;
 
-    // alpha -= .5;
-    // alpha = sign(alpha)*pow(abs(alpha), 1.5);
-    // alpha += .5;
 
-    // l = 1. + 5.*(cos(_iTime)*.5 + .5);
+    // sharpness *= 2.;
+    sharpness = max(sharpness, 1e-6);
 
-    sharpness *= S;
+    return smoothstep(-sharpness, +sharpness, 0.5*(priority2+priority1) + (sharpness + 1.)*(2.*alpha - 1.));
+    // return smoothstep(-sharpness, +sharpness, mix(priority2, priority1, alpha) + (sharpness + 1.)*(2.*alpha - 1.));
+
+    // priority1 = mix(priority1, 1.1, 1.-alpha);
+    // priority2 = mix(priority2, -1.1, alpha);
+
+
+    // priority1 = mix(priority1, -1.5, alpha);
+    // priority1 = mix(priority1, +1.5, 1.-alpha);
+
+    // priority1 = priority1*0.5 + 0.5;
+    // priority2 = priority2*0.5 + 0.5;
+
+    // priority1 *= alpha,
+    // priority2 *= 1.-alpha;
+
+    // priority1 = priority1*2. - 1.;
+    // priority2 = priority2*2. - 1.;
+
+    // priority2 = mix(priority1, -1.50, 1.-alpha);
+
+    // priority1 += alpha*(priority1*(alpha - 2.) - alpha*1.5);
+
+    // priority2 = mix(priority1, +1.0, 1.-alpha);
+
+    // return linearstep(-sharpness, +sharpness, priority1+priority2);
+
+    // return smoothstep(-sharpness, +sharpness, priority1+priority2);
+
+    // sharpness *= S;
 
     // sharpness = 10.;
-    // sharpness = 1.;
+    // l = L*sharpness;
+    // l = sharpness*8.;
+    // sharpness = 2./sharpness;
 
+    return linearstep(-sharpness, +sharpness, priority1+priority2 + l*(alpha - .5));
     return smoothstep(-sharpness, +sharpness, priority1+priority2 + l*(alpha - .5));
 }
 
@@ -117,12 +152,45 @@ vec3 preservingMix(vec3 col1, vec3 avg1, vec3 col2, vec3 avg2, float alpha)
 
 void main()
 {
+    /**** Preparing UV and stuff ****/
     UV_PREPROCESS
 
-    // auv /= .1;
-    // auv -= 1.0;
     auv.x /= xrange.y * 0.5;
     auv.y /= yrange.y * 0.5; 
+
+    vec2 gridDim = vec2(2, 10);
+    vec2 gridPos = vec2(floor(uv*gridDim)/(gridDim-1.));
+    vec2 cellUV = (uv-gridPos*(1. - 1./gridDim))*(gridDim);
+
+    vec2 borderEpsilon = 0.02.rr;
+    if(
+        cellUV.x > (1. - borderEpsilon.x) ||
+        cellUV.y > (1. - borderEpsilon.y) ||
+        cellUV.x < borderEpsilon.x ||
+        cellUV.y < borderEpsilon.y
+    )
+    {
+        fragColor.rgb = vec3(1); return;
+    }
+
+    cellUV /= gridDim;
+    CorrectUV(cellUV, scale);
+    auv = cellUV;
+
+    /**** Cells changement pressets ****/
+
+    float smoothness = gridPos.y*4.;
+
+
+
+
+
+    // if(auv)
+    // fragColor.rg = auv;
+    // return; 
+
+    // auv /= 5.;
+    // auv -= 1.0;
 
 
     const int n = 8;
@@ -132,7 +200,7 @@ void main()
     float slice = 0.001;
     // slide *= pow(xrange.y, 4.0);
     // float a = (auv.x + .5)*(1.+slice) - slice*.5;
-    float a = uv.x*(1.+slice) - slice*.5;
+    float a = cellUV.x*(1.+slice) - slice*.5;
 
     // a = 1.;
 
@@ -288,6 +356,10 @@ void main()
     // var[c] *= 10.;
     // var[b] *= 10.;
 
+
+    // smoothness = floor(smoothness*smoothnessStep)/smoothnessStep;
+    // if(distance(smoothness, 1.-uv.y) < 0.0025) discard;
+
     vec3 a3 = PPM_MixMax(
         col[b].r, esp[b].r, sqrt(var[b].r),
         col[c].r, esp[c].r, sqrt(var[c].r),
@@ -297,7 +369,8 @@ void main()
         MixMaxBlending_INVERT_SECOND, 
         
         // .0, 
-        smoothstep(0., 1., 1.-uv.y),
+        // smoothstep(0., 1., 1.-uv.y),
+        smoothness,
         a
         ).rrr;
     
@@ -325,8 +398,8 @@ void main()
     // col[c] *= 1.5*vec3(1, 0.5, 0); esp[c] *= 1.5*vec3(1, 0.5, 0);
     // col[b] *= 1.3*vec3(0, 0.6, 1); esp[b] *= 1.3*vec3(0, 0.6, 1);
 
-    col[c] *= vec3(1, 0, 0);
-    col[b] *= vec3(0, 1, 0);
+    col[c] *= vec3(1, 0, 0); esp[c] *= vec3(1, 0, 0);
+    col[b] *= vec3(0, 1, 0); esp[b] *= vec3(0, 1, 0);
 
     // col[c] = vec3(1, 0, 0);
     // col[b] = vec3(0, 1, 0);
@@ -334,7 +407,9 @@ void main()
     // a3 = a.rrr;
 
     // #define OKLAB_COLOR_BLENDING
-    
+
+    // a3 = a.rrr;
+
     #ifdef OKLAB_COLOR_BLENDING
     col[c] = rgb2oklab(col[c]);
     col[b] = rgb2oklab(col[b]);
@@ -344,11 +419,11 @@ void main()
     fragColor.rgb = mix(col[c], col[b], smoothstep(vec3(0.), vec3(1.), a3));
 
     // Variance preserving blending
-    // fragColor.rgb = preservingMix(
-    //     col[b], esp[b],
-    //     col[c], esp[c],
-    //     a3.r
-    // );
+    fragColor.rgb = preservingMix(
+        col[b], esp[b],
+        col[c], esp[c],
+        a3.r
+    );
 
     #ifdef OKLAB_COLOR_BLENDING
     fragColor.rgb = oklab2rgb(fragColor.rgb);
@@ -365,12 +440,12 @@ void main()
 
     if(xrange.y > 2.)
         fragColor.rgb = mix(
-            vec3(1, 0, 0)*(getPriority(col[c].x, esp[c].x, sqrt(var[c].x)) * .5 + .5),
-            vec3(0, 1, 0)*(getPriority(col[b].g, esp[b].g, sqrt(var[b].g)) * .5 + .5),
+            vec3(1)*(getPriority(col[c].x, esp[c].x, sqrt(var[c].x)) * .5 + .5),
+            vec3(1)*(getPriority(col[b].g, esp[b].g, sqrt(var[b].g)) * .5 + .5),
             a3.r
         );
 
-    // fragColor.r = 0.;
+    // fragColor.rgb = 0.0.rrr;
     // if(a3.r > 1e-6) fragColor.rgb = vec3(1, 0, 0);
 
     // fragColor.rgb = a3;
@@ -378,6 +453,10 @@ void main()
     // fragColor.rgb = getPriority(col)
 
     // fragColor.rgb = .5.rrr;
+
+    // a = cubicstep(0., 1., a);
+    // a = smoothstep(0., 1., a);
+    // fragColor.rgb = a.rrr;
 }
 
 

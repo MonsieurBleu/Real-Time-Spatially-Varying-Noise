@@ -11,7 +11,7 @@ NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 void NoiseApp::init(int paramSample)
 {
     globals._renderScale = 1;
-    globals._UI_res_scale = 2;
+    globals._UI_res_scale = 1.5;
 
     App::init();
     loadAllAssetsInfos("data/");
@@ -110,14 +110,14 @@ void NoiseApp::addNoiseViewers()
         )
     );
 
-    ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            currentNoise, 
-            vec2(-10, 10), 
-            vec2(-10, 10)
-        )
-    );
+    // ComponentModularity::addChild(
+    //     *rootEntity, 
+    //     NoiseTester::noiseSprite(
+    //         currentNoise, 
+    //         vec2(-10, 10), 
+    //         vec2(-10, 10)
+    //     )
+    // );
 
     // ComponentModularity::addChild(
     //     *rootEntity, 
@@ -132,7 +132,7 @@ void NoiseApp::addNoiseViewers()
 void NoiseApp::removeNoiseViewers()
 {
     rootEntity->comp<EntityGroupInfo>().children.pop_back();
-    rootEntity->comp<EntityGroupInfo>().children.pop_back();
+    // rootEntity->comp<EntityGroupInfo>().children.pop_back();
     // rootEntity->comp<EntityGroupInfo>().children.pop_back();
 
     ManageGarbage<WidgetBackground>();
@@ -231,8 +231,8 @@ void NoiseApp::mainloop()
         {
             if (itcnt % 50 == 0)
             {
-                system("clear");
-                std::cout << TERMINAL_INFO << "Refreshing ALL shaders...\n" << TERMINAL_RESET;
+                // system("clear");
+                std::cout << TERMINAL_INFO << "\n\n####> Refreshing ALL shaders...\n" << TERMINAL_RESET;
 
                 ui.fontMaterial->reset();
                 defaultSUIMaterial->reset();

@@ -34,8 +34,8 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     for(auto &i : rinfo.hist)
         i = vec3(0);
 
-    for(int x = pmin.x; x < pmax.x; x++)
     for(int y = pmin.y; y < pmax.y; y++)
+    for(int x = pmin.x; x < pmax.x; x++)
     {
         int id = y*screen2Dres.x + x;
         u8vec3 c = screen2D[id];
@@ -48,6 +48,8 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
         // sortedPixels[cnt++] = c;
     }
 
+
+    
     vec3 cnt(0);
     rinfo.h8th = vec3(-1);
     rinfo.l8th = vec3(-1);
@@ -71,6 +73,28 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
         }
     }
 
+
+
+    rinfo.avg = vec3(sum) * isize / 255.f;
+
+    rinfo.dev = vec3(0);
+    rinfo.var = vec3(0);
+
+    for(int i = 0; i < 256; i++)
+    {
+        vec3 d = vec3(i)/255.f - rinfo.avg;  
+        rinfo.var += d*d*rinfo.hist[i];
+    }
+
+    // rinfo.var *= isize;
+    rinfo.dev = sqrt(rinfo.var);
+
+
+
+
+
+
+
     // if(globals.appTime.getUpdateCounter()%256 == 0)
     // {
     //     NOTIF_MESSAGE("255 : " << rinfo.hist[255]);
@@ -78,24 +102,6 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     //     NOTIF_MESSAGE("0 : " << rinfo.hist[0]);
     // }
 
-    rinfo.avg = vec3(sum) * isize / 255.f;
-
-    rinfo.dev = vec3(0);
-    rinfo.var = vec3(0);
-
-    for(int x = pmin.x; x < pmax.x; x++)
-    for(int y = pmin.y; y < pmax.y; y++)
-    {
-        int id = y*screen2Dres.x + x;
-        u8vec3 c = screen2D[id];
-        // rinfo.esp += vec3(c) * vec3(rinfo.hist[c.x].x, rinfo.hist[c.y].y, rinfo.hist[c.z].z);
-
-        vec3 d = (vec3(c) / 255.f) - rinfo.avg;
-        rinfo.var += d*d;
-    }
-
-    rinfo.var *= isize;
-    rinfo.dev = sqrt(rinfo.var);
 
     // NOTIF_MESSAGE(pmin.x << " " << pmax.x << " | " << pmin.y << " " << pmax.y);
     // NOTIF_MESSAGE(vec2(screen2Dres));
