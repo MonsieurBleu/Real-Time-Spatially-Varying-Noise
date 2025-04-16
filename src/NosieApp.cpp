@@ -124,13 +124,18 @@ void NoiseApp::initInput()
 
 void NoiseApp::addNoiseViewers()
 {
+    auto n = NoiseTester::noiseSprite(
+        currentNoise, 
+        vec2(-1, 1), 
+        vec2(-1, 1)
+    );
+
     ComponentModularity::addChild(
-        *rootEntity, 
-        NoiseTester::noiseSprite(
-            currentNoise, 
-            vec2(-1, 1), 
-            vec2(-1, 1)
-        )
+        *rootEntity, n.visual
+    );
+
+    ComponentModularity::addChild(
+        *controlsEntity, n.controls
     );
 
     // ComponentModularity::addChild(
@@ -155,6 +160,7 @@ void NoiseApp::addNoiseViewers()
 void NoiseApp::removeNoiseViewers()
 {
     rootEntity->comp<EntityGroupInfo>().children.pop_back();
+    controlsEntity->comp<EntityGroupInfo>().children.pop_back();
     // rootEntity->comp<EntityGroupInfo>().children.pop_back();
     // rootEntity->comp<EntityGroupInfo>().children.pop_back();
 
@@ -205,21 +211,36 @@ void NoiseApp::mainloop()
     }
 
     ComponentModularity::addChild(
-        *rootEntity, 
-        VulpineBlueprintUI::StringListSelectionMenu(
-            "Noise Selection Menu", noiseMap, 
-            [&](Entity *e, float v)
-            {
-                removeNoiseViewers();
-                currentNoise = e->comp<EntityInfos>().name;
-                addNoiseViewers();
-                NOTIF_MESSAGE(currentNoise);
-            },
-            [&](Entity *e)
-            {
-                return e->comp<EntityInfos>().name == currentNoise ? 0.f : 1.f;
-            },
-            0.f
+        *rootEntity,
+        newEntity("Menu"
+            , UI_BASE_COMP
+            , WidgetBox()
+            , WidgetStyle()
+                .setautomaticTabbing(2)
+            , EntityGroupInfo({
+                VulpineBlueprintUI::StringListSelectionMenu(
+                    "Noise Selection Menu", noiseMap, 
+                    [&](Entity *e, float v)
+                    {
+                        removeNoiseViewers();
+                        currentNoise = e->comp<EntityInfos>().name;
+                        addNoiseViewers();
+                        NOTIF_MESSAGE(currentNoise);
+                    },
+                    [&](Entity *e)
+                    {
+                        return e->comp<EntityInfos>().name == currentNoise ? 0.f : 1.f;
+                    },
+                    -0.5f
+                ),
+                controlsEntity = newEntity("Control Parent"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(2)
+                    , EntityGroupInfo()
+                )
+            })
         )
     );
 
@@ -270,15 +291,11 @@ void NoiseApp::mainloop()
             }
         }
 
-
-        /* Retreiving the 2D scene RGB values */
-        auto &screenTexture = screenBuffer2D.getTexture(0);
-        screen2Dres = screenTexture.getResolution();
-        // NOTIF_MESSAGE(vec2(screen2Dres));
-        screen2D.resize(screen2Dres.x * screen2Dres.y);
-        screenTexture.bind(0);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, screen2D.data());
-
+        /* UI Update */
+        WidgetUI_Context uiContext = WidgetUI_Context(&ui);
+        updateEntityCursor(globals.mousePosition(), globals.mouseLeftClickDown(), globals.mouseLeftClick(), VulpineBlueprintUI::UIcontext, false);
+        ComponentModularity::synchronizeChildren(rootEntity);
+        updateWidgetsStyle();
 
         static vec2 windowsSizeTmp(1000);
         static int screenshotFrameWait = 0;
@@ -317,11 +334,6 @@ void NoiseApp::mainloop()
 
 
 
-        /* UI Update */
-        WidgetUI_Context uiContext = WidgetUI_Context(&ui);
-        updateEntityCursor(globals.mousePosition(), globals.mouseLeftClickDown(), globals.mouseLeftClick(), VulpineBlueprintUI::UIcontext, false);
-        ComponentModularity::synchronizeChildren(rootEntity);
-        updateWidgetsStyle();
 
         mainloopPreRenderRoutine();
 
@@ -372,6 +384,14 @@ void NoiseApp::mainloop()
         globals.drawFullscreenQuad();
 
         // std::cout << globals.appTime.getDeltaMS() << "\n";
+
+        /* Retreiving the 2D scene RGB values */
+        auto &screenTexture = screenBuffer2D.getTexture(0);
+        screen2Dres = screenTexture.getResolution();
+        // NOTIF_MESSAGE(vec2(screen2Dres));
+        screen2D.resize(screen2Dres.x * screen2Dres.y);
+        screenTexture.bind(0);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, screen2D.data());
 
         /* Main loop End */
         mainloopEndRoutine();

@@ -9,6 +9,8 @@
 layout (location = 0) out vec4 fragColor;
 layout (location = 32) uniform vec2 xrange;
 layout (location = 33) uniform vec2 yrange;
+layout (location = 34) uniform vec2 gridSize;
+
 
 in vec2 uv;
 in vec2 scale;

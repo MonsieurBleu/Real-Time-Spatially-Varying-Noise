@@ -1,0 +1,7 @@
+"fractal - 2D"
+:	"fractal - 2D"
+	: uniforms 2D
+	: "data/noises/fractal.frag"
+	: data/noises/noise2D.vert
+	;
+;

@@ -24,7 +24,7 @@ EntityRef SimpleFloatingText(
             .setbackgroundColor2(VulpineColorUI::DarkBackgroundColor2)
             .settextColor1(VulpineColorUI::LightBackgroundColor1)
             .settextColor2(VulpineColorUI::HightlightColor1)
-        , WidgetText(U"...")
+        , WidgetText(U"0.00")
     );
 
     t->set<WidgetButton>(WidgetButton(
@@ -37,6 +37,8 @@ EntityRef SimpleFloatingText(
             return 0.f;
         }
     ));
+
+    // t->comp<WidgetText>().mesh->state.setRotation(vec3(0, 0, radians(90.f)));
 
     return t;
 }
@@ -81,7 +83,7 @@ void NoiseTester::createNoisesMaterials()
     //     std::cout << i.first << "\n";
 }
 
-EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange, vec2 yrange)
+NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange, vec2 yrange)
 {
     ModelRef sprite = newModel(Loader<MeshMaterial>::get(materialName));
     sprite->noBackFaceCulling = true;
@@ -112,19 +114,27 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
     sprite->state.scaleScalar(0);
 
     // TODO : add ranges uniforms
-    sprite->uniforms.add(ShaderUniform(xrange, 32));
-    sprite->uniforms.add(ShaderUniform(yrange, 33));
+    // sprite->uniforms.add(ShaderUniform(xrange, 32));
+    // sprite->uniforms.add(ShaderUniform(yrange, 33));
 
+    
+    
     WidgetBox box;
     // box.useClassicInterpolation = true;
-
+    
     EntityRef noiseView = newEntity(materialName + " - Vizualazer"
         , UI_BASE_COMP
         , box
         , WidgetStyle()
         , WidgetSprite(sprite)
         , WidgetRenderInfos()
+        , FigureInfo()
     );
+
+    FigureInfo *fi = &noiseView->comp<FigureInfo>();
+    noiseView->comp<WidgetSprite>().sprite->uniforms.add(ShaderUniform(&fi->range, 32));
+    noiseView->comp<WidgetSprite>().sprite->uniforms.add(ShaderUniform(&fi->range, 33));
+    noiseView->comp<WidgetSprite>().sprite->uniforms.add(ShaderUniform(&fi->gridSize, 34));
 
     noiseView->comp<WidgetBox>().set(vec2(-1+textMargin*2., 1), vec2(-1, 1-textMargin*2.));
 
@@ -149,7 +159,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         })
     );
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 1; i++)
     {
         ComponentModularity::addChild(
             *rowsText, 
@@ -161,7 +171,67 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
             SimpleFloatingText("entry")
         );
     }
-    rowsText->comp<WidgetStyle>().setautomaticTabbing(4);
+    rowsText->comp<WidgetStyle>().setautomaticTabbing(1);
+
+    #define MAX_GRID_SIZE 6
+    #define MAX_ZOOM_LEVEL 10
+
+    Entity *rowsPTR = rowsText.get();
+    Entity *columnsPTR = columnsText.get();
+
+    EntityRef Controls = newEntity(materialName + " - Controls"
+        , UI_BASE_COMP
+        , WidgetBox()
+        , WidgetStyle()
+            .setautomaticTabbing(5)
+        , EntityGroupInfo({
+            VulpineBlueprintUI::NamedEntry(U"Rows", 
+                VulpineBlueprintUI::SmoothSlider("Rows", 0, 1, MAX_GRID_SIZE, 
+                    [fi, rowsPTR](Entity *e, float v)
+                    {
+                        fi->gridSize.y = v*MAX_GRID_SIZE;
+
+                        auto &c = rowsPTR->comp<EntityGroupInfo>().children;
+                        
+                        int diff = (int)fi->gridSize.y - c.size();
+                        if(diff > 0)
+                            for(int i = 0; i < diff; i++) 
+                                ComponentModularity::addChild(*rowsPTR, SimpleFloatingText("entry"));
+                        else
+                            for(int i = 0; i < -diff; i++)
+                                c.pop_back();
+                                
+                        rowsPTR->comp<WidgetStyle>().setautomaticTabbing(fi->gridSize.y);
+                        
+                        ManageGarbage<WidgetBackground>(); ManageGarbage<WidgetSprite>(); ManageGarbage<WidgetText>();
+                    }, 
+                    [fi](Entity *e){return fi->gridSize.y/MAX_GRID_SIZE;})
+            ),
+            VulpineBlueprintUI::NamedEntry(U"Columns", 
+                VulpineBlueprintUI::SmoothSlider("Columns", 0, 1, MAX_GRID_SIZE, 
+                    [fi, columnsPTR](Entity *e, float v)
+                    {
+                        fi->gridSize.x = v*MAX_GRID_SIZE;
+
+                        auto &c = columnsPTR->comp<EntityGroupInfo>().children;
+                        
+                        int diff = (int)fi->gridSize.x - c.size();
+                        if(diff > 0)
+                            for(int i = 0; i < diff; i++) 
+                                ComponentModularity::addChild(*columnsPTR, SimpleFloatingText("entry"));
+                        else
+                            for(int i = 0; i < -diff; i++)
+                                c.pop_back();
+                        
+                        ManageGarbage<WidgetBackground>(); ManageGarbage<WidgetSprite>(); ManageGarbage<WidgetText>();
+                    }, 
+                    [fi](Entity *e){return fi->gridSize.x/MAX_GRID_SIZE;})
+            ),
+            VulpineBlueprintUI::NamedEntry(U"Zoom", 
+                VulpineBlueprintUI::SmoothSlider("Zoom", 1e-3, 1, MAX_ZOOM_LEVEL, [fi](Entity *e, float v){fi->range.x = fi->range.y = 1./v;}, [fi](Entity *e){return 1./fi->range.x;})
+            ),
+        })
+    );
 
     auto noiseViewParentPTR = noiseViewParent.get();
     auto noiseViewPTR = noiseView.get();
@@ -173,6 +243,7 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
             .setautomaticTabbing(3)
         , EntityGroupInfo()
         );
+    
 
     for(auto i = 0; i < 3; i++)
     {
@@ -222,8 +293,8 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
                         VulpineBlueprintUI::ColoredConstEntry("Deviation",  [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().dev[i], 5);}),
 
                         VulpineBlueprintUI::ColoredConstEntry("Median",     [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().med[i], 5);}),
-                        VulpineBlueprintUI::ColoredConstEntry("Low 8th",    [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().l8th[i], 5);}),
-                        VulpineBlueprintUI::ColoredConstEntry("High 8th",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().h8th[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("Low 4th",    [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().l4th[i], 5);}),
+                        VulpineBlueprintUI::ColoredConstEntry("High 4th",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().h4th[i], 5);}),
                         
                     })
                 )
@@ -276,5 +347,9 @@ EntityRef NoiseTester::noiseSprite(const std::string &materialName, vec2 xrange,
         )
     );
 
-    return parent;
+    NoiseTester::NoiseTesterGroup r;
+    r.visual = parent;
+    r.controls = Controls;
+
+    return r;
 }

@@ -12,6 +12,9 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
     ivec2 pmin = ceil (vec2(screen2Dres)*(box.displayMin*0.5f + 0.5f));
     ivec2 pmax = floor(vec2(screen2Dres)*(box.displayMax*0.5f + 0.5f));
 
+    // pmin += 20.f;
+    // pmax -= 20.f;
+
     {
         float tmp = pmin.y;
         pmin.y = screen2Dres.y - pmax.y;
@@ -26,7 +29,7 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
 
     vec3 sum;
     ivec2 size2D = pmax - pmin;
-    const int size = (pmax.x-pmin.x)*(pmax.y-pmin.y);
+    const int size = (pmax.x-pmin.x+1)*(pmax.y-pmin.y+1);
     const float isize = 1.0/(float)(size);
 
     // const std::vector<u8vec3> sortedPixels(size);
@@ -46,13 +49,15 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
             rinfo.hist[c[i]][i] += 1;
         
         // sortedPixels[cnt++] = c;
+
+        // screen2D[id] /= 4;
     }
 
 
     
     vec3 cnt(0);
-    rinfo.h8th = vec3(-1);
-    rinfo.l8th = vec3(-1);
+    rinfo.h4th = vec3(-1);
+    rinfo.l4th = vec3(-1);
     rinfo.med = vec3(-1);
 
     for(int i = 0; i < 256; i++)
@@ -62,11 +67,11 @@ COMPONENT_DEFINE_SYNCH(WidgetRenderInfos)
         cnt += rinfo.hist[i];
         for(int j = 0; j < 3; j++)
         {
-            if(rinfo.l8th[j] == -1.f && cnt[j] >= 1.f/8.f)
-                rinfo.l8th[j] = float(i)/255.;
+            if(rinfo.l4th[j] == -1.f && cnt[j] >= 1.f/4.f)
+                rinfo.l4th[j] = float(i)/255.;
 
-            if(rinfo.h8th[j] == -1.f && cnt[j] >= 7.f/8.f)
-                rinfo.h8th[j] = float(i)/255.;
+            if(rinfo.h4th[j] == -1.f && cnt[j] >= 3.f/4.f)
+                rinfo.h4th[j] = float(i)/255.;
 
             if(rinfo.med[j] == -1.f && cnt[j] >= .5)
                 rinfo.med[j] = float(i)/255.;

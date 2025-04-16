@@ -9,5 +9,11 @@ namespace NoiseTester
 
     void createNoisesMaterials();
 
-    EntityRef noiseSprite(const std::string &materialName, vec2 xrange, vec2 yrange);
+    struct NoiseTesterGroup
+    {
+        EntityRef visual;
+        EntityRef controls;
+    };
+
+    NoiseTesterGroup noiseSprite(const std::string &materialName, vec2 xrange, vec2 yrange);
 }

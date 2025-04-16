@@ -23,10 +23,17 @@ struct WidgetRenderInfos
     vec3 var = vec3(0);
 
     vec3 med = vec3(0);
-    vec3 l8th = vec3(0);
-    vec3 h8th = vec3(0);
+    vec3 l4th = vec3(0);
+    vec3 h4th = vec3(0);
 };
 
 Adaptive_Component(WidgetRenderInfos)
 
+struct FigureInfo
+{
+    vec2 gridSize = vec2(1);
+    vec2 range = vec2(1.);
+};
+
+Ephemeral_Component(FigureInfo)
 

@@ -19,6 +19,7 @@ private:
     std::list<EventInput*> _inputs;
 
     EntityRef rootEntity;
+    EntityRef controlsEntity;
 
     void addNoiseViewers();
     void removeNoiseViewers();
