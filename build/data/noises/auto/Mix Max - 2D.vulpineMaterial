@@ -1,0 +1,7 @@
+"Mix Max - 2D"
+:	"Mix Max - 2D"
+	: uniforms 2D
+	: "data/noises/Mix Max.frag"
+	: data/noises/noise2D.vert
+	;
+;

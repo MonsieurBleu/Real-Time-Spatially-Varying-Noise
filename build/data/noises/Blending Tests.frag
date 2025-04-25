@@ -4,23 +4,10 @@
 
 #include functions/FiltrableNoises.glsl
 
-float usmoothstep(float edge0, float edge1, float x)
-{
-    float t; 
-    t = (x - edge0) / (edge1 - edge0);
-    return t * t * (3.0 - 2.0 * t);
-}
 
-float cubicstep(float edge0, float edge1, float x)
-{
-    float t = (x - edge0) / (edge1 - edge0) - .5;
-    return clamp(t*t*t*4. + .5, 0., 1.);
-}
 
-float invsmoothstep(float edge0, float edge1, float x)
-{
-    return .5 + sin(asin(1 - 2.*linearstep(edge1, edge0, x))/3.);
-}
+
+
 
 float P = 1.0;
 float L = 1.;
@@ -101,7 +88,7 @@ float PPM_MixMax(
     float avg2,
     float var2,
     int invertChannel,
-    float sharpness,
+    float sharpness,    
     float alpha
 )
 {

@@ -120,6 +120,68 @@ void NoiseApp::initInput()
             },
             InputManager::Filters::always, false)
     );
+
+    _inputs.push_back(&
+        InputManager::addEventInput(
+            "toggle auto shader refresh", GLFW_KEY_F1, 0, GLFW_PRESS, [&]() {
+                
+                System<WidgetRenderInfos>([](Entity &entity)
+                {
+                    WidgetRenderInfos& rinfo = entity.comp<WidgetRenderInfos>();
+                    
+
+                    for(int i = 0; i < 3; i++)
+                    {
+                        // std::cout << "\n= float[](0., ";
+                        std::cout << "\n= mat4(";
+                        float cnt = 0.;
+                        for(int j = 0; j < 256; j++)
+                        {
+                            cnt += rinfo.hist[j][i];
+
+                            if(j && j%8 == 0)
+                                std::cout << cnt << ", ";
+                        }
+                        std::cout << cnt << ");\n";
+                    }
+                    return;
+
+
+                    vec3 cnt(0);
+
+                    const int n = 128;
+                    ivec3 id(1);
+                    float nTiles[3][n];
+
+                    for(int i = 0; i < 256; i++)
+                    {
+                        cnt += rinfo.hist[i];      
+                        
+                        for(int j = 0; j < 3; j++)
+                        {
+                            if(cnt[j] >= (float)id[j]/(float)n)
+                            {
+                                nTiles[j][id[j]-1] = (float)i/255.;
+                                id[j] ++;
+                            }
+                        }
+                    }
+
+                    for(int i = 0; i < 3; i++)
+                    {
+                        std::cout << "\n= float[](0., ";
+                        for(int j = 0; j < n-1; j++)
+                        {
+                            std::cout << nTiles[i][j] << ", ";
+                        }
+                        std::cout << "1.);\n";
+                    }
+
+                });
+
+            },
+            InputManager::Filters::always, false)
+    );
 }
 
 void NoiseApp::addNoiseViewers()
