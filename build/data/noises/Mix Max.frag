@@ -106,6 +106,8 @@ vec2 MixMaxMicro_Original(
 
     float CDF = .5 + .5*tanh(0.85*alpha);
 
+    // CDF = 1.0;
+
     return vec2(
         clamp(1. - CDF*((p1 + alpha)-(p2 - alpha)/sqrt(m1*m1+m2*m2)), 0., 1.), 
         0.
@@ -117,18 +119,35 @@ vec2 MixMaxMicro_Flat(
     float v2, float p2, float m2,
     float alpha)
 {   
-    p1 = 2.*p1-1.;
-    p2 = 2.*p2-1.;
+    // p1 = 2.*p1-1.;
+    // p2 = 2.*p2-1.;
     // alpha = 2.*alpha-1.;
 
-    float alphaD = distance(alpha, .5);
-    float d = (1. - sqrt(1. - 2.*alphaD));
+    // float alphaD = distance(alpha, .5);
+    // float d = (1. - sqrt(1. - 2.*alphaD));
 
-    p1 += sign(alpha-.5)*d;
-    p2 -= sign(alpha-.5)*d;
+    // p1 += sign(alpha-.5)*d;
+    // p2 -= sign(alpha-.5)*d;
+
+    // return vec2(
+    //     clamp(1. - (p1-p2)/sqrt(m1*m1+m2*m2), 0., 1.), 
+    //     0.
+    //     );
+
+
+
+    float alphaD = distance(alpha, .5);
+    float d = sign(alpha-.5)*(1. - sqrt(1. - 2.*alphaD));
+    float s = sqrt(m1*m1+m2*m2);
+
+    // p1 = 2.*p1-1.;
+    // p2 = 2.*p2-1.;
+    p1 += d;
+    // p2 -= d;
 
     return vec2(
-        clamp(1. - (p1-p2)/sqrt(m1*m1+m2*m2), 0., 1.), 
+        linearstep(s-d*s, -s-d*s, p1-p2)
+        ,
         0.
         );
 }
@@ -143,7 +162,7 @@ void main()
 
 
     ProceduralProcess voronoi;
-    voronoi.uv = auv*100. * .2;
+    voronoi.uv = auv*100.;
 
 
     vec3 tmpvorcenter;
@@ -176,9 +195,10 @@ void main()
     voronoi2.value = 1. - clamp(voronoi3d(vec3(voronoi2.uv, 0.), tmpvorcenter).r*.95 - 0.025, 0., 1.);
 
     float alpha = cos(_iTime*.5)*.5 + .5;
-    alpha = 0.5;
     // alpha = cos(_iTime)*.25 + .25;
-    // alpha = uv.x;
+    alpha = uv.x;
+    // alpha = linearstep(0.25, 0.75, uv.x);
+    alpha = 0.25;
 
     ProceduralProcess in1 = voronoi;
     ProceduralProcess in2 = voronoi2;
@@ -189,7 +209,7 @@ void main()
     // #define USED_MIXMAX_MICRO MixMaxMicro_Original
     #define USED_MIXMAX_MICRO MixMaxMicro_Flat
 
-    // #define USING_FLAT_PRIORITY
+    #define USING_FLAT_PRIORITY
 
     #ifdef USING_FLAT_PRIORITY
         float p1 = ProceduralPriority_HIST_SIZE(in1);
@@ -205,15 +225,16 @@ void main()
         alpha
     );
 
-    float basevariance = 0.001;
+    // float basevariance = cos(_iTime)*.5 + .5;
+    float basevariance = 1.0;
     vec2 mixmax_micro = USED_MIXMAX_MICRO(
         in1.value, p1, basevariance,
         in2.value, 1.-p2, basevariance,
         alpha
     );
 
-    // fragColor.rgb = mix(vec3(1, 0, 0), vec3(0, 1, 0), mixmax_micro.r);
-    fragColor.rgb = mix(in1.value, 1.-in2.value, mixmax_micro.r).rrr;
+    fragColor.rgb = mix(vec3(1, 0, 0), vec3(0, 1, 0), mixmax_micro.r);
+    // fragColor.rgb = mix(in1.value, 1.-in2.value, mixmax_micro.r).rrr;
     // fragColor.rgb = mix(in1.value, 1.-in2.value, mixmax.r).rrr;
     // fragColor.rgb = 1.-mixmax.rrr;
     // fragColor.rgb = 1.-mixmax_micro.rrr;
