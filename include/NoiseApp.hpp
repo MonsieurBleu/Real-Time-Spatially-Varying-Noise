@@ -28,6 +28,8 @@ private:
     bool doScreenshot = false;
     bool doResize = false;
 
+    bool doMipMapGeneration = false;
+
 public:
     
     static inline bool doAutomaticShaderRefresh = false;

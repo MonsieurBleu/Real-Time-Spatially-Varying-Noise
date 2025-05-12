@@ -5,7 +5,8 @@ namespace NoiseTester
 {
     inline EntityRef root;
 
-    inline float textMargin = 0.05;
+    // inline float textMargin = 0.05;
+    inline float textMargin = 0.0001;
 
     void createNoisesMaterials();
 

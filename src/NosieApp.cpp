@@ -5,8 +5,11 @@
 #include <AssetManager.hpp>
 #include <Blueprint/EngineBlueprintUI.hpp>
 #include <NoiseTester.hpp>
+#include <MathsUtils.hpp>
 
 #include <stb/stb_image_write.h>
+#include <stb/stb_image_resize.h>
+#include <stb/stb_image.h>
 
 NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 
@@ -14,7 +17,7 @@ NoiseApp::NoiseApp(GLFWwindow *window) : App(window){}
 void NoiseApp::init(int paramSample)
 {
     globals._renderScale = 1;
-    globals._UI_res_scale = 2.;
+    globals._UI_res_scale = 1.;
 
 
     VulpineColorUI::DarkBackgroundColor1 = vec4(1);
@@ -128,60 +131,36 @@ void NoiseApp::initInput()
                 System<WidgetRenderInfos>([](Entity &entity)
                 {
                     WidgetRenderInfos& rinfo = entity.comp<WidgetRenderInfos>();
-                    
-
                     for(int i = 0; i < 3; i++)
                     {
                         // std::cout << "\n= float[](0., ";
-                        std::cout << "\n= mat4(";
+                        std::cout << "\n= float[](";
                         float cnt = 0.;
                         for(int j = 0; j < 256; j++)
                         {
                             cnt += rinfo.hist[j][i];
 
-                            if(j && j%8 == 0)
+                            if(j && j%2 == 0)
                                 std::cout << cnt << ", ";
                         }
                         std::cout << cnt << ");\n";
                     }
-                    return;
-
-
-                    vec3 cnt(0);
-
-                    const int n = 128;
-                    ivec3 id(1);
-                    float nTiles[3][n];
-
-                    for(int i = 0; i < 256; i++)
-                    {
-                        cnt += rinfo.hist[i];      
-                        
-                        for(int j = 0; j < 3; j++)
-                        {
-                            if(cnt[j] >= (float)id[j]/(float)n)
-                            {
-                                nTiles[j][id[j]-1] = (float)i/255.;
-                                id[j] ++;
-                            }
-                        }
-                    }
-
-                    for(int i = 0; i < 3; i++)
-                    {
-                        std::cout << "\n= float[](0., ";
-                        for(int j = 0; j < n-1; j++)
-                        {
-                            std::cout << nTiles[i][j] << ", ";
-                        }
-                        std::cout << "1.);\n";
-                    }
-
                 });
 
             },
             InputManager::Filters::always, false)
     );
+
+    _inputs.push_back(&
+        InputManager::addEventInput(
+            "toggle auto shader refresh", GLFW_KEY_F3, 0, GLFW_PRESS, [&]() {
+
+                doMipMapGeneration = true;
+                
+            },
+            InputManager::Filters::always, false)
+    );
+
 }
 
 void NoiseApp::addNoiseViewers()
@@ -359,8 +338,100 @@ void NoiseApp::mainloop()
         ComponentModularity::synchronizeChildren(rootEntity);
         updateWidgetsStyle();
 
-        static vec2 windowsSizeTmp(1000);
+        static vec2 windowsSizeTmp(1024);
+        static ivec2 windowsResizeCapture(1024);
         static int screenshotFrameWait = 0;
+        
+        static std::string currentNoiseTMP;
+        if(doMipMapGeneration)
+        {
+            if(!doScreenshot && !doResize)
+            {
+                if(windowsResizeCapture.x == 1024)
+                {
+                    currentNoiseTMP = currentNoise;
+                }
+
+                // else
+                if(windowsResizeCapture.x == 512)
+                {   
+                    static std::vector<u8vec3> ground(512*512);
+
+                    #define STBIR_DEFAULT_FILTER_DOWNSAMPLE   STBIR_FILTER_CUBICBSPLINE
+                    
+                    for(int r = 512; r >= 64; r /= 2)
+                    {
+                        stbir_resize_uint8(
+                            (uint8*)screen2D.data(), screen2Dres.x, screen2Dres.y, 0,
+                            (uint8*)ground.data(), r, r, 0, 3 
+                        );
+    
+                        stbi_write_png(
+                            ("results/mipmaps/" + std::to_string(r) + "_ground.png").c_str(),
+                            r,
+                            r,
+                            3,
+                            ground.data(), 
+                            0
+                        );
+                    }
+                }
+
+                windowsResizeCapture /= 2;
+                currentNoise = "mipmaps/" + std::to_string(windowsResizeCapture.x);
+
+                if(windowsResizeCapture.x < 64)
+                {
+                    doMipMapGeneration = false;
+                    windowsResizeCapture = ivec2(1024);
+                    glfwSetWindowSize(window, windowsSizeTmp.x, windowsSizeTmp.y);
+                    currentNoise = currentNoiseTMP;
+
+                    static std::vector<u8vec3> ground(512*512);
+                    static std::vector<u8vec3> ours(512*512);
+
+                    for(int r = 256; r >= 64; r /= 2)
+                    {
+                        int tmp;
+                        u8vec3* ground = (u8vec3*) stbi_load(
+                            ("results/mipmaps/" + std::to_string(r) + "_ground.png").c_str(), &tmp, &tmp, &tmp, 3
+                        );
+
+                        u8vec3* ours = (u8vec3*) stbi_load(
+                            ("results/mipmaps/" + std::to_string(r) + ".png").c_str(), &tmp, &tmp, &tmp, 3
+                        );
+
+                        for(int i = 0; i < r*r; i++)
+                        {
+                            float d = .5*round(distance(vec3(ours[i]), vec3(ground[i])))/sqrt(255*255*3);
+
+                            vec3 c(0);
+                            c = mix(c, vec3(0, 0, .75), smoothstep(0.f, 1.f/128.f, d));
+                            c = mix(c, vec3(0, .75, .75), smoothstep(1.f/128.f, 1.f/64.f, d));
+                            c = mix(c, vec3(0, .75, 0), smoothstep(1.f/64.f, 1.f/32.f, d));
+                            c = mix(c, vec3(.75, .75, 0), smoothstep(1.f/32.f, 1.f/16.f, d));
+                            c = mix(c, vec3(.75, 0, 0), smoothstep(1.f/16.f, 1.f/8.f, d));
+
+                            // c = vec3(abs(vec3(ours[i])- vec3(ground[i])))/255.f;
+                            c = vec3(clamp(d*8., 0., 1.));
+
+                            ours[i] = u8vec3(round(c*255.f));
+                        }
+                        stbi_flip_vertically_on_write(false);
+                        stbi_write_png(
+                            ("results/mipmaps/" + std::to_string(r) + "_difference.png").c_str(),
+                            r, r, 3, ours, 0);
+
+                        stbi_image_free(ground);
+                        stbi_image_free(ours);
+                    }
+                }
+                else
+                    doResize = true;
+            }
+        }
+
+
         if(doScreenshot)
         {
             screenshotFrameWait --;
@@ -379,13 +450,17 @@ void NoiseApp::mainloop()
 
                 glfwSetWindowSize(window, windowsSizeTmp.x, windowsSizeTmp.y);
                 rootEntity->comp<WidgetBox>().set(vec2(-1, 1), vec2(-1, 1));
+                WidgetBox::tabbingSpacingScale = vec2(1.);
+
+                doScreenshot = false;
             }
         }
         if(doResize)
         {
             // resizeCallback(window, 2000, 1000);
             rootEntity->comp<WidgetBox>().set(vec2(-3, 1), vec2(-1, 1));
-            glfwSetWindowSize(window, 1000, 1000);
+            WidgetBox::tabbingSpacingScale = vec2(0.);
+            glfwSetWindowSize(window, windowsResizeCapture.x, windowsResizeCapture.y);
             doResize = false;
             doScreenshot = true;
             windowsSizeTmp = globals.windowSize();
