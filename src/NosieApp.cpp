@@ -318,8 +318,14 @@ void NoiseApp::mainloop()
         itcnt++;
         if (doAutomaticShaderRefresh)
         {
-            if (itcnt % 50 == 0)
+            static float lastTime = 0.;
+            float now = globals.appTime.getElapsedTime();
+
+            // if (itcnt % 50 == 0)
+            if(now-lastTime > 1)
             {
+                lastTime = now;
+
                 // system("clear");
                 std::cout << TERMINAL_INFO << "\n\n####> Refreshing ALL shaders...\n" << TERMINAL_RESET;
 
@@ -331,7 +337,7 @@ void NoiseApp::mainloop()
                     m.second->reset();
             }
         }
-
+        
         /* UI Update */
         WidgetUI_Context uiContext = WidgetUI_Context(&ui);
         updateEntityCursor(globals.mousePosition(), globals.mouseLeftClickDown(), globals.mouseLeftClick(), VulpineBlueprintUI::UIcontext, false);
@@ -405,15 +411,22 @@ void NoiseApp::mainloop()
                         {
                             float d = .5*round(distance(vec3(ours[i]), vec3(ground[i])))/sqrt(255*255*3);
 
+                            if(i%r < 5)
+                            {
+                                d = (float)(i/r)/(float)(r);
+                            }
+
                             vec3 c(0);
-                            c = mix(c, vec3(0, 0, .75), smoothstep(0.f, 1.f/128.f, d));
-                            c = mix(c, vec3(0, .75, .75), smoothstep(1.f/128.f, 1.f/64.f, d));
-                            c = mix(c, vec3(0, .75, 0), smoothstep(1.f/64.f, 1.f/32.f, d));
-                            c = mix(c, vec3(.75, .75, 0), smoothstep(1.f/32.f, 1.f/16.f, d));
-                            c = mix(c, vec3(.75, 0, 0), smoothstep(1.f/16.f, 1.f/8.f, d));
+                            
+                            c = mix(c, vec3(0, 0, 1), smoothstep(0.f, 0.075f,  d*2.f));
+                            c = mix(c, vec3(0, 1, 0), smoothstep(0.075f, 0.125f, d*2.f));
+                            c = mix(c, vec3(1, 1, 0), smoothstep(0.125f, 0.25f, d*2.f));
+                            c = mix(c, vec3(1, 0, 0), smoothstep(0.25f, 0.5f, d*2.f));
+                            c = mix(c, vec3(1, 0, 1), smoothstep(0.5f, 1.f, d*2.f));
 
                             // c = vec3(abs(vec3(ours[i])- vec3(ground[i])))/255.f;
-                            c = vec3(clamp(d*8., 0., 1.));
+                            // c = vec3(clamp(d, 0.f, 1.f));
+
 
                             ours[i] = u8vec3(round(c*255.f));
                         }
