@@ -349,36 +349,36 @@ void main()
 
     //// ANISOTROPIC FINAL RESULTS
     {
-        #define INPUT1 ground
-        #define INPUT2 pavingStones
+        // #define INPUT1 ground
+        // #define INPUT2 pavingStones
 
-        doPlaneRT = true;
-        border = 0.;
+        // doPlaneRT = true;
+        // border = 0.;
 
-        _MixMax_choice = 3;
-        alpha = 0.5 + cellUV.y*1e-3;
+        // _MixMax_choice = 3;
+        // alpha = 0.5 + cellUV.y*1e-3;
 
-        fragOutput = OUTPUT_INFLUENCE_GREY;
+        // fragOutput = OUTPUT_INFLUENCE_GREY;
 
-        // it = 32;
+        // it = 8;
 
-        int gpx = int(round(gridPos.x*(gridSize.x - 1)));
+        // int gpx = int(round(gridPos.x*(gridSize.x - 1)));
 
-        switch(gpx)
-        {
-            case 0 : 
-            _MixMax_choice = 1;
-            USE_FS24_FILTRERED_LEVEL_APPROXIMATION = true;
-            break;
+        // switch(gpx)
+        // {
+        //     case 0 : 
+        //     _MixMax_choice = 1;
+        //     USE_FS24_FILTRERED_LEVEL_APPROXIMATION = true;
+        //     break;
 
-            case 1 : 
-            _MixMax_choice = 3;
-            break;
+        //     case 1 : 
+        //     _MixMax_choice = 3;
+        //     break;
 
-            case 2 : 
-            useAlisaingGroundTruth = true; 
-            break;
-        }
+        //     case 2 : 
+        //     useAlisaingGroundTruth = true; 
+        //     break;
+        // }
     }
 
     //// FILTERING FINAL RESULT 
@@ -401,6 +401,16 @@ void main()
     //     // _MixMax_choice = 2;
     }
 
+    {
+        #define INPUT1 ground
+        #define INPUT2 rock
+
+        alpha = cellUV.x;
+        lambda = gridPos.y;
+        fragOutput = OUTPUT_INFLUENCE_GREY;
+        _MixMax_choice = 3;
+    }
+
 
 /***
     [2] ###### Starting the final view setups ########################### 
@@ -408,18 +418,22 @@ void main()
 
     float lambda1 = lambda;
     float lambda2 = lambda;
+    it *= 2;
     itnb = it*it;
 
     if(!doGridBorders || (gridSize.x <= 1 && gridSize.y <= 1)){fga = 1.; border = 0.;}
 
     for(; i < it; i+= useAlisaingGroundTruth ? 1 : it, j = 0)
     for(; j < it; j+= useAlisaingGroundTruth ? 1 : it)
+    for(int k = useAlisaingGroundTruth ? 0 : 1; k < 2; k++)
     {
 
     UV_PREPROCESS
 
     const vec2 pixelSize = 4.*vec2(2., 1.)/vec2(_iResolution);
     vec2 off = pixelSize * (vec2(i, j)/float(it) - .5);
+
+    off *= 6400.*(k == 0 ? dFdx(cellUV) : dFdx(cellUV));
 
     if(doPlaneRT)
     {
