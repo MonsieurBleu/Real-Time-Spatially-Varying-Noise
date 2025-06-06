@@ -11,6 +11,29 @@ layout (location = 32) uniform vec2 xrange;
 layout (location = 33) uniform vec2 yrange;
 layout (location = 34) uniform vec2 gridSize;
 
+layout (location = 35) uniform int entry1;
+layout (location = 36) uniform int entry2;
+
+layout (location = 37) uniform int priority1;
+layout (location = 38) uniform int priority2;
+
+layout (location = 39) uniform vec3 color1;
+layout (location = 40) uniform vec3 color2;
+
+layout (location = 41) uniform float baseVariance;
+layout (location = 42) uniform float baseAlpha;
+
+layout (location = 43) uniform int gridAlphaMode;
+
+layout (location = 44) uniform int method;
+
+layout (location = 45) uniform ivec2 invertPriority;
+layout (location = 46) uniform ivec2 invertEntry;
+
+layout (location = 47) uniform int matoutput;
+layout (location = 48) uniform int varianceMethod;
+layout (location = 49) uniform int view;
+
 
 in vec2 uv;
 in vec2 scale;

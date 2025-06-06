@@ -20,15 +20,15 @@ void NoiseApp::init(int paramSample)
     globals._UI_res_scale = 1.;
 
 
-    VulpineColorUI::DarkBackgroundColor1 = vec4(1);
-    VulpineColorUI::DarkBackgroundColor2 = vec4(0.5, 0.75, 1., 1);
+    // VulpineColorUI::DarkBackgroundColor1 = vec4(0.9);
+    // // VulpineColorUI::DarkBackgroundColor2 = vec4(0.75);
 
-    VulpineColorUI::LightBackgroundColor1 = vec4(0, 0, 0, 1);
-    VulpineColorUI::LightBackgroundColor2 = vec4(0, 0, 0, 0.5);
+    // VulpineColorUI::LightBackgroundColor1 = vec4(0, 0, 0, 1);
+    // VulpineColorUI::LightBackgroundColor2 = vec4(0, 0, 0, 0.5);
 
     
-    VulpineColorUI::DarkBackgroundColor1Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor1), 1.);
-    VulpineColorUI::DarkBackgroundColor2Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor2), 1.);
+    // VulpineColorUI::DarkBackgroundColor1Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor1), 1.);
+    // VulpineColorUI::DarkBackgroundColor2Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor2), 1.);
 
 
     App::init();
@@ -140,7 +140,7 @@ void NoiseApp::initInput()
                         {
                             cnt += rinfo.hist[j][i];
 
-                            if(j && j%2 == 0)
+                            if(j && j%8 == 0)
                                 std::cout << cnt << ", ";
                         }
                         std::cout << cnt << ");\n";
@@ -150,6 +150,30 @@ void NoiseApp::initInput()
             },
             InputManager::Filters::always, false)
     );
+
+    _inputs.push_back(&
+        InputManager::addEventInput(
+            "toggle auto shader refresh", GLFW_KEY_F4, 0, GLFW_PRESS, [&]() {
+                
+                System<WidgetRenderInfos>([](Entity &entity)
+                {
+                    WidgetRenderInfos& rinfo = entity.comp<WidgetRenderInfos>();
+                    for(int i = 0; i < 3; i++)
+                    {
+                        // std::cout << "\n= float[](0., ";
+                        float cnt = 0.;
+                        for(int j = 0; j < 256; j++)
+                        {
+                            if(j%32 == 0)
+                                std::cout << "(" << (float)j/256. << "," << rinfo.hist[j][i] << ")\n";
+                        }
+                    }
+                });
+
+            },
+            InputManager::Filters::always, false)
+    );
+
 
     _inputs.push_back(&
         InputManager::addEventInput(
@@ -251,6 +275,21 @@ void NoiseApp::mainloop()
         }
     }
 
+    std::unordered_map<std::string, EntityRef> entriesButtons1;
+    std::unordered_map<std::string, EntityRef> entriesButtons2;
+
+    std::unordered_map<std::string, EntityRef> priorityButtons1;
+    std::unordered_map<std::string, EntityRef> priorityButtons2;
+
+    
+    for(auto i : NoiseTester::entries)
+    {
+        entriesButtons1[i.first] = EntityRef();
+        entriesButtons2[i.first] = EntityRef();
+        priorityButtons1[i.first] = EntityRef();
+        priorityButtons2[i.first] = EntityRef();
+    }
+
     ComponentModularity::addChild(
         *rootEntity,
         newEntity("Menu"
@@ -259,36 +298,132 @@ void NoiseApp::mainloop()
             , WidgetStyle()
                 .setautomaticTabbing(2)
             , EntityGroupInfo({
-                VulpineBlueprintUI::StringListSelectionMenu(
-                    "Noise Selection Menu", noiseMap, 
-                    [&](Entity *e, float v)
-                    {
-                        removeNoiseViewers();
-                        currentNoise = e->comp<EntityInfos>().name;
-                        addNoiseViewers();
-                        NOTIF_MESSAGE(currentNoise);
-                    },
-                    [&](Entity *e)
-                    {
-                        return e->comp<EntityInfos>().name == currentNoise ? 0.f : 1.f;
-                    },
-                    -0.5f
-                ),
-                controlsEntity = newEntity("Control Parent"
+
+                newEntity("Selection Parent Menu"
                     , UI_BASE_COMP
                     , WidgetBox()
                     , WidgetStyle()
-                        .setautomaticTabbing(2)
-                    , EntityGroupInfo()
+                        .setautomaticTabbing(1)
+                    , EntityGroupInfo({
+
+                        VulpineBlueprintUI::StringListSelectionMenu(
+                            "Material", noiseMap, 
+                            [&](Entity *e, float v)
+                            {
+                                removeNoiseViewers();
+                                currentNoise = e->comp<EntityInfos>().name;
+                                addNoiseViewers();
+                                NOTIF_MESSAGE(currentNoise);
+                            },
+                            [&](Entity *e)
+                            {
+                                return e->comp<EntityInfos>().name == currentNoise ? 0.f : 1.f;
+                            },
+                            -0.5f,
+                            VulpineColorUI::HightlightColor1,
+                            0.075f
+                        ),
+                        VulpineBlueprintUI::StringListSelectionMenu(
+                            "Texture 1", entriesButtons1, 
+                            [&](Entity *e, float v)
+                            {
+                                NoiseTester::entry1 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                                NoiseTester::priority1 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                            },
+                            [&](Entity *e)
+                            {
+                                return NoiseTester::entry1 == NoiseTester::entries[e->comp<EntityInfos>().name] ? 0. : 1.;
+                            },
+                            -0.5f,
+                            VulpineColorUI::HightlightColor3,
+                            0.075f
+                        ),
+                        VulpineBlueprintUI::StringListSelectionMenu(
+                            "Priority 1", priorityButtons1, 
+                            [&](Entity *e, float v)
+                            {
+                                NoiseTester::priority1 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                            },
+                            [&](Entity *e)
+                            {
+                                return NoiseTester::priority1 == NoiseTester::entries[e->comp<EntityInfos>().name] ? 0. : 1.;
+                            },
+                            -0.5f,
+                            VulpineColorUI::HightlightColor3,
+                            0.075f
+                        ),
+                        VulpineBlueprintUI::StringListSelectionMenu(
+                            "Texture 2", entriesButtons2, 
+                            [&](Entity *e, float v)
+                            {
+                                NoiseTester::entry2 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                                NoiseTester::priority2 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                            },
+                            [&](Entity *e)
+                            {
+                                return NoiseTester::entry2 == NoiseTester::entries[e->comp<EntityInfos>().name] ? 0. : 1.;
+                            },
+                            -0.5f,
+                            VulpineColorUI::HightlightColor2,
+                            0.075f
+                        ),
+                        VulpineBlueprintUI::StringListSelectionMenu(
+                            "Priority 2", priorityButtons2, 
+                            [&](Entity *e, float v)
+                            {
+                                NoiseTester::priority2 = NoiseTester::entries[e->comp<EntityInfos>().name];
+                            },
+                            [&](Entity *e)
+                            {
+                                return NoiseTester::priority2 == NoiseTester::entries[e->comp<EntityInfos>().name] ? 0. : 1.;
+                            },
+                            -0.5f,
+                            VulpineColorUI::HightlightColor2,
+                            0.075f
+                        )
+                    })
+                ),
+                
+                newEntity("Control & Color Parent"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                    , EntityGroupInfo({
+                        newEntity("Entries Color Selection"
+                            , UI_BASE_COMP
+                            , WidgetBox()
+                            , WidgetStyle()
+                                .setautomaticTabbing(2)
+                                .setuseInternalSpacing(false)
+                            , EntityGroupInfo({
+                                VulpineBlueprintUI::ColorSelectionScreen("Entry 1 Color",
+                                    [](){return NoiseTester::color1;},
+                                    [](vec3 color){NoiseTester::color1 = color;}
+                                ),
+                                VulpineBlueprintUI::ColorSelectionScreen("Entry 2 Color",
+                                    [](){return NoiseTester::color2;},
+                                    [](vec3 color){NoiseTester::color2 = color;}
+                                )
+                            })
+                        ),
+                        controlsEntity = newEntity("Control Parent"
+                            , UI_BASE_COMP
+                            , WidgetBox()
+                            , WidgetStyle()
+                                .setautomaticTabbing(1)
+                            , EntityGroupInfo()
+                        )
+                    })
                 )
-            })
+            })  
         )
     );
 
     addNoiseViewers();
 
     
-
+    WidgetBox::smoothingAnimationSpeed = 20;
 
 
     // ComponentModularity::addChild(
@@ -481,11 +616,9 @@ void NoiseApp::mainloop()
             screenshotFrameWait = 50;
         }
 
-
-
-
-
         mainloopPreRenderRoutine();
+
+        // std::cout << 1000.f / globals.appTime.getLastAvg().count() << "\n";
 
         /* UI & 2D Render */
         glEnable(GL_BLEND);
@@ -532,8 +665,6 @@ void NoiseApp::mainloop()
         finalProcessingStage.activate();
         screenBuffer2D.bindTexture(0, 7);
         globals.drawFullscreenQuad();
-
-        // std::cout << globals.appTime.getDeltaMS() << "\n";
 
         /* Retreiving the 2D scene RGB values */
         auto &screenTexture = screenBuffer2D.getTexture(0);

@@ -23,7 +23,7 @@ private:
 
     void addNoiseViewers();
     void removeNoiseViewers();
-    std::string currentNoise = "test - 2D";
+    std::string currentNoise = "Mix Max - 2D";
 
     bool doScreenshot = false;
     bool doResize = false;

@@ -102,6 +102,33 @@ NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materi
     sprite->setMap(7, Loader<Texture2D>::get("Rock_P"));
     sprite->setMap(8, Loader<Texture2D>::get("Rock_P2"));
 
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::entry1, 35));
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::entry2, 36));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::priority1, 37));
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::priority2, 38));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::color1, 39));
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::color2, 40));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::baseVariance, 41));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::alpha, 42));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::gridAlphaMode, 43));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::method, 44));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::invertPriotiy, 45));
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::invertEntry, 46));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::output, 47));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::varianceMethod, 48));
+
+    sprite->uniforms.add(ShaderUniform(&NoiseTester::view, 49));
+
+
     GenericSharedBuffer buff(new char[sizeof(vec3)*6]);
     vec3 *pos = (vec3*)buff.get();
 
@@ -195,54 +222,288 @@ NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materi
         , UI_BASE_COMP
         , WidgetBox()
         , WidgetStyle()
-            .setautomaticTabbing(5)
+            .setautomaticTabbing(16)
         , EntityGroupInfo({
             VulpineBlueprintUI::NamedEntry(U"Rows", 
-                VulpineBlueprintUI::SmoothSlider("Rows", 0, 1, MAX_GRID_SIZE, 
-                    [fi, rowsPTR](Entity *e, float v)
+                VulpineBlueprintUI::ValueInputSlider("Rows", 0, MAX_GRID_SIZE, MAX_GRID_SIZE, 
+                    [fi, rowsPTR](float v)
                     {
-                        fi->gridSize.y = v*MAX_GRID_SIZE;
+                        fi->gridSize.y = v;
 
-                        auto &c = rowsPTR->comp<EntityGroupInfo>().children;
+                        // auto &c = rowsPTR->comp<EntityGroupInfo>().children;
                         
-                        int diff = (int)fi->gridSize.y - c.size();
-                        if(diff > 0)
-                            for(int i = 0; i < diff; i++) 
-                                ComponentModularity::addChild(*rowsPTR, SimpleFloatingText("entry"));
-                        else
-                            for(int i = 0; i < -diff; i++)
-                                c.pop_back();
+                        // int diff = (int)fi->gridSize.y - c.size();
+                        // if(diff > 0)
+                        //     for(int i = 0; i < diff; i++) 
+                        //         ComponentModularity::addChild(*rowsPTR, SimpleFloatingText("entry"));
+                        // else
+                        //     for(int i = 0; i < -diff; i++)
+                        //         c.pop_back();
                                 
-                        rowsPTR->comp<WidgetStyle>().setautomaticTabbing(fi->gridSize.y);
+                        // rowsPTR->comp<WidgetStyle>().setautomaticTabbing(fi->gridSize.y);
                         
                         ManageGarbage<WidgetBackground>(); ManageGarbage<WidgetSprite>(); ManageGarbage<WidgetText>();
                     }, 
-                    [fi](Entity *e){return fi->gridSize.y/MAX_GRID_SIZE;})
+                    [fi](){return fi->gridSize.y;})
             ),
             VulpineBlueprintUI::NamedEntry(U"Columns", 
-                VulpineBlueprintUI::SmoothSlider("Columns", 0, 1, MAX_GRID_SIZE, 
-                    [fi, columnsPTR](Entity *e, float v)
+                VulpineBlueprintUI::ValueInputSlider("Columns", 0, MAX_GRID_SIZE, MAX_GRID_SIZE, 
+                    [fi, columnsPTR](float v)
                     {
-                        fi->gridSize.x = v*MAX_GRID_SIZE;
+                        fi->gridSize.x = v;
 
-                        auto &c = columnsPTR->comp<EntityGroupInfo>().children;
+                        // auto &c = columnsPTR->comp<EntityGroupInfo>().children;
                         
-                        int diff = (int)fi->gridSize.x - c.size();
-                        if(diff > 0)
-                            for(int i = 0; i < diff; i++) 
-                                ComponentModularity::addChild(*columnsPTR, SimpleFloatingText("entry"));
-                        else
-                            for(int i = 0; i < -diff; i++)
-                                c.pop_back();
+                        // int diff = (int)fi->gridSize.x - c.size();
+                        // if(diff > 0)
+                        //     for(int i = 0; i < diff; i++) 
+                        //         ComponentModularity::addChild(*columnsPTR, SimpleFloatingText("entry"));
+                        // else
+                        //     for(int i = 0; i < -diff; i++)
+                        //         c.pop_back();
                         
                         ManageGarbage<WidgetBackground>(); ManageGarbage<WidgetSprite>(); ManageGarbage<WidgetText>();
                     }, 
-                    [fi](Entity *e){return fi->gridSize.x/MAX_GRID_SIZE;})
+                    [fi](){return fi->gridSize.x;})
             ),
-            VulpineBlueprintUI::NamedEntry(U"Zoom", 
-                VulpineBlueprintUI::SmoothSlider("Zoom", 1e-3, 1, MAX_ZOOM_LEVEL, [fi](Entity *e, float v){fi->range.x = fi->range.y = 1./v;}, [fi](Entity *e){return 1./fi->range.x;})
+            VulpineBlueprintUI::NamedEntry(U"Zoom Level", 
+                VulpineBlueprintUI::ValueInputSlider("Zoom", 0, MAX_ZOOM_LEVEL, MAX_ZOOM_LEVEL, 
+                    [fi](float v){fi->range.x = fi->range.y = pow(2., v);}, 
+                    [fi](){return log2(fi->range.y);}
+                )
             ),
-        })
+
+            // newEntity("space"),
+            
+            VulpineBlueprintUI::NamedEntry(U"Base Variance", 
+                VulpineBlueprintUI::ValueInputSlider(
+                    "Base Variance", 0, 1, 1e3, [](float v){NoiseTester::baseVariance = v;}, [](){return NoiseTester::baseVariance;})
+            ),
+
+            VulpineBlueprintUI::NamedEntry(U"Alpha", 
+                VulpineBlueprintUI::ValueInputSlider(
+                    "Alpha", 0, 1, 1e3, [](float v){NoiseTester::alpha= v; gridAlphaMode = 0;}, [](){return NoiseTester::alpha;}
+                )
+            ),
+
+            // newEntity("space"),
+
+            VulpineBlueprintUI::NamedEntry(U"Weight Calculation Method",
+                newEntity("Methode"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                        .setuseInternalSpacing(false)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::Toggable("Linear", "", 
+                            [](Entity *e, float v){method = 0;},
+                            [](Entity *e){return method == 0 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("FS24", "", 
+                            [](Entity *e, float v){method = 1;},
+                            [](Entity *e){return method == 1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("CL25", "", 
+                            [](Entity *e, float v){method = 2;},
+                            [](Entity *e){return method == 2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("[X]", "", 
+                            [](Entity *e, float v){method = -1;},
+                            [](Entity *e){return method == -1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                        VulpineBlueprintUI::Toggable("[Y]", "", 
+                            [](Entity *e, float v){method = -2;},
+                            [](Entity *e){return method == -2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                    })
+                )
+            ),
+
+            VulpineBlueprintUI::NamedEntry(U"Variance Approximation Method",
+                newEntity("Methode"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                        .setuseInternalSpacing(false)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::Toggable("GD", "", 
+                            [](Entity *e, float v){varianceMethod = 0;},
+                            [](Entity *e){return varianceMethod == 0 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("FS24", "", 
+                            [](Entity *e, float v){varianceMethod = 1;},
+                            [](Entity *e){return varianceMethod == 1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("CL25", "", 
+                            [](Entity *e, float v){varianceMethod = 2;},
+                            [](Entity *e){return varianceMethod == 2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("[X]", "", 
+                            [](Entity *e, float v){varianceMethod = -1;},
+                            [](Entity *e){return varianceMethod == -1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                        VulpineBlueprintUI::Toggable("[Y]", "", 
+                            [](Entity *e, float v){varianceMethod = -2;},
+                            [](Entity *e){return varianceMethod == -2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                    })
+                )
+            ),
+
+            VulpineBlueprintUI::NamedEntry(U"View",
+                newEntity("Methode"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                        .setuseInternalSpacing(false)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::Toggable("Flat", "", 
+                            [](Entity *e, float v){view = 0;},
+                            [](Entity *e){return view == 0 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("Surface", "", 
+                            [](Entity *e, float v){view = 1;},
+                            [](Entity *e){return view == 1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("[X]", "", 
+                            [](Entity *e, float v){view = -1;},
+                            [](Entity *e){return view == -1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                        VulpineBlueprintUI::Toggable("[Y]", "", 
+                            [](Entity *e, float v){view = -2;},
+                            [](Entity *e){return view == -2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                    })
+                )
+            ),
+
+            VulpineBlueprintUI::NamedEntry(U"Output",
+                newEntity("Methode"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                        .setuseInternalSpacing(false)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::Toggable("Blending", "", 
+                            [](Entity *e, float v){output = 0;},
+                            [](Entity *e){return output == 0 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("Weight", "", 
+                            [](Entity *e, float v){output = 1;},
+                            [](Entity *e){return output == 1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("LOD", "", 
+                            [](Entity *e, float v){output = 2;},
+                            [](Entity *e){return output == 2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor6
+                        ),
+                        VulpineBlueprintUI::Toggable("[X]", "", 
+                            [](Entity *e, float v){output = -1;},
+                            [](Entity *e){return output == -1 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                        VulpineBlueprintUI::Toggable("[Y]", "", 
+                            [](Entity *e, float v){output = -2;},
+                            [](Entity *e){return output == -2 ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor4
+                        ),
+                    })
+                )
+            ),
+
+            newEntity("Advanced Alpha Options"
+                , UI_BASE_COMP
+                , WidgetBox()
+                , WidgetStyle()
+                    .setautomaticTabbing(1)
+                    .setuseInternalSpacing(false)
+                , EntityGroupInfo({
+                    VulpineBlueprintUI::Toggable("Vertical Alpha Gradient", "", 
+                        [](Entity *e, float v){
+                            if(gridAlphaMode != -1)
+                            {
+                                alpha = 0.f;
+                                gridAlphaMode = -1;
+                            }
+                        },
+                        [](Entity *e){return gridAlphaMode == -1 ? 0.f : 1.;}
+                        , VulpineColorUI::HightlightColor5
+                    ),
+                    VulpineBlueprintUI::Toggable("Horizontal Alpha Gradient", "", 
+                        [](Entity *e, float v){
+                            if(gridAlphaMode != -2)
+                            {
+                                alpha = 0.f;
+                                gridAlphaMode = -2;
+                            }
+                        },
+                        [](Entity *e){return gridAlphaMode == -2 ? 0.f : 1.;}
+                        , VulpineColorUI::HightlightColor5
+                    ),
+                })
+            ),
+
+            newEntity("Advanced Priority Options"
+                , UI_BASE_COMP
+                , WidgetBox()
+                , WidgetStyle()
+                    .setautomaticTabbing(1)
+                    .setuseInternalSpacing(false)
+                , EntityGroupInfo({
+                    VulpineBlueprintUI::Toggable("Invert Priority 1", "", 
+                        [](Entity *e, float v){invertPriotiy.x = !invertPriotiy.x;},
+                        [](Entity *e){return invertPriotiy.x ? 0.f : 1.;}
+                        , VulpineColorUI::HightlightColor5
+                    ),
+                    VulpineBlueprintUI::Toggable("Invert Priority 2", "", 
+                        [](Entity *e, float v){invertPriotiy.y = !invertPriotiy.y;},
+                        [](Entity *e){return invertPriotiy.y ? 0.f : 1.;}
+                        , VulpineColorUI::HightlightColor5
+                    ),
+                })
+            ),
+
+            newEntity("Advanced Entry Options"
+                    , UI_BASE_COMP
+                    , WidgetBox()
+                    , WidgetStyle()
+                        .setautomaticTabbing(1)
+                        .setuseInternalSpacing(false)
+                    , EntityGroupInfo({
+                        VulpineBlueprintUI::Toggable("Invert Entry 1", "", 
+                            [](Entity *e, float v){invertEntry.x = !invertEntry.x;},
+                            [](Entity *e){return invertEntry.x ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor5
+                        ),
+                        VulpineBlueprintUI::Toggable("Invert Entry 2", "", 
+                            [](Entity *e, float v){invertEntry.y = !invertEntry.y;},
+                            [](Entity *e){return invertEntry.y ? 0.f : 1.;}
+                            , VulpineColorUI::HightlightColor5
+                        ),
+                    })
+                ),
+                
+            })
     );
 
     auto noiseViewParentPTR = noiseViewParent.get();
@@ -298,10 +559,10 @@ NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materi
                 newEntity(materialName + " - Scalar Stats View"
                     , UI_BASE_COMP
                     , WidgetBox()
-                    , WidgetStyle().setautomaticTabbing(6)
+                    , WidgetStyle().setautomaticTabbing(5)
                     , EntityGroupInfo({
                         VulpineBlueprintUI::ColoredConstEntry("Esperance",  [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().avg[i], 5);}),
-                        VulpineBlueprintUI::ColoredConstEntry("Variance",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().var[i], 5);}),
+                        // VulpineBlueprintUI::ColoredConstEntry("Variance",   [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().var[i], 5);}),
                         VulpineBlueprintUI::ColoredConstEntry("Deviation",  [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().dev[i], 5);}),
 
                         VulpineBlueprintUI::ColoredConstEntry("Median",     [noiseViewPTR, i](){return ftou32str(noiseViewPTR->comp<WidgetRenderInfos>().med[i], 5);}),
