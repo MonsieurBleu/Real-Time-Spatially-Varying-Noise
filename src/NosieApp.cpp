@@ -20,15 +20,22 @@ void NoiseApp::init(int paramSample)
     globals._UI_res_scale = 1.;
 
 
-    // VulpineColorUI::DarkBackgroundColor1 = vec4(0.9);
-    // // VulpineColorUI::DarkBackgroundColor2 = vec4(0.75);
+    VulpineColorUI::DarkBackgroundColor1 = vec4(1.0);
+    // VulpineColorUI::DarkBackgroundColor2 = vec4(0.75);
 
-    // VulpineColorUI::LightBackgroundColor1 = vec4(0, 0, 0, 1);
-    // VulpineColorUI::LightBackgroundColor2 = vec4(0, 0, 0, 0.5);
+    VulpineColorUI::LightBackgroundColor1 = vec4(0, 0, 0, 1);
+    VulpineColorUI::LightBackgroundColor2 = vec4(0, 0, 0, 0.5);
 
     
-    // VulpineColorUI::DarkBackgroundColor1Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor1), 1.);
-    // VulpineColorUI::DarkBackgroundColor2Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor2), 1.);
+    VulpineColorUI::DarkBackgroundColor1Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor1), 1.);
+    VulpineColorUI::DarkBackgroundColor2Opaque = vec4(vec3(VulpineColorUI::DarkBackgroundColor2), 1.);
+
+    VulpineColorUI::HightlightColor1 *= vec4(vec3(.5), 1.);
+    VulpineColorUI::HightlightColor2 *= vec4(vec3(.5), 1.);
+    VulpineColorUI::HightlightColor3 *= vec4(vec3(.5), 1.);
+    VulpineColorUI::HightlightColor4 *= vec4(vec3(.5), 1.);
+    VulpineColorUI::HightlightColor5 *= vec4(vec3(.5), 1.);
+    VulpineColorUI::HightlightColor6 *= vec4(vec3(.5), 1.);
 
 
     App::init();
@@ -297,6 +304,7 @@ void NoiseApp::mainloop()
             , WidgetBox()
             , WidgetStyle()
                 .setautomaticTabbing(2)
+                .setuseInternalSpacing(false)
             , EntityGroupInfo({
 
                 newEntity("Selection Parent Menu"
@@ -388,13 +396,13 @@ void NoiseApp::mainloop()
                     , UI_BASE_COMP
                     , WidgetBox()
                     , WidgetStyle()
-                        .setautomaticTabbing(1)
+                        .setautomaticTabbing(2)
                     , EntityGroupInfo({
                         newEntity("Entries Color Selection"
                             , UI_BASE_COMP
                             , WidgetBox()
                             , WidgetStyle()
-                                .setautomaticTabbing(2)
+                                .setautomaticTabbing(1)
                                 .setuseInternalSpacing(false)
                             , EntityGroupInfo({
                                 VulpineBlueprintUI::ColorSelectionScreen("Entry 1 Color",

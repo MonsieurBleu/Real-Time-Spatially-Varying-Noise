@@ -35,6 +35,11 @@ layout (location = 48) uniform int varianceMethod;
 layout (location = 49) uniform int view;
 
 
+layout (location = 50) uniform int gridVarianceMode;
+
+layout (location = 51) uniform int priorityMethod;
+
+
 in vec2 uv;
 in vec2 scale;
 
