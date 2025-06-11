@@ -48,8 +48,11 @@ namespace NoiseTester
         {"Voronoi 2", 1},
         {"Local Random Phase 1", 2},
         {"Local Random Phase 2", 3},
-        {"Rock", 4},
-        {"Paving Stones", 5},
-        {"Grass", 6}
+        // {"Rock", 4},
+        // {"Paving Stones", 5},
+        // {"Grass", 6}
+        {"os", 4},
+        {"muscle", 5},
+        {"graisse", 6}
     };
 }
