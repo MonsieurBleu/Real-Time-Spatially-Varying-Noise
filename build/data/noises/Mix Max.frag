@@ -164,30 +164,11 @@ vec2 MixMaxMicro_Flat(
     float s = sqrt(m1*m1+m2*m2);
 
     float iCDF = 0.125*atanh((alpha+alpha)-1.);
-    // iCDF = d*2. * 0.125;
 
-    // iCDF *= .125;
-    // iCDF = 0.;
-
-    /*
-        filtrage ==> 0
-            s ==> sqrt(m1² + m2²)
-                \int mixmax ==> alpha
-
-        filtrage ==> 1
-            s ==> -d(.5-alpha+iCDF)
-                mixmax ==> alpha
-    */
-
-    // alpha = max(alpha, 1e-6);
-
-    // iCDF = mix(iCDF, 2.*iCDF, filtrage);
     float sf = -d/(.5 - alpha + iCDF);
     s = mix(s, sf, clamp(filtrage, 0., 1.));
 
     s = max(s, 1e-6);
-
-    // s = sf;
 
     return vec2(
         clamp(.5 - (p1-p2 + d)/s - iCDF, 0., 1.)
@@ -325,11 +306,11 @@ void main()
     #define TEXTURE(t, uv) vec4(doGroundTruthh ? textureLod(t, uv, 0) : texture(t, uv))
     
     #define OUTPUT_BLENDING_COLOR   0
-    #define OUTPUT_INFLUENCE_COLOR  1
+    #define OUTPUT_INFLUENCE_GREY   1
     #define OUTPUT_FILTRAGE         2
 
     #define OUTPUT_BLENDING_GREY    3
-    #define OUTPUT_INFLUENCE_GREY   4
+    #define OUTPUT_INFLUENCE_COLOR  4
     #define OUTPUT_VARIANCE_1       5
     #define OUTPUT_VARIANCE_2       6
     #define OUTPUT_VARIANCE         7
@@ -367,6 +348,27 @@ void main()
         case +2 : alpha = gridPos.y; break;
         default : break;
     }
+
+    if(baseVariance < 0.)
+        switch(gridVarianceMode)
+        {
+            case -2 : lambda = 1.-cellUV.y; break;
+            case -1 : lambda = 1.-cellUV.x; break;
+            case +1 : lambda = gridPos.x; break;
+            case +2 : lambda = gridPos.y; break;
+            default : break;
+        }
+
+    // switch(priorityMethod)
+    // {
+    //     case -2 : lambda = 1.-cellUV.y; break;
+    //     case -1 : lambda = 1.-cellUV.x; break;
+    //     case +1 : lambda = gridPos.x; break;
+    //     case +2 : lambda = gridPos.y; break;
+    //     default : break;
+    // }
+
+    USING_FLAT_PRIORITY = priorityMethod == 1 || (priorityMethod == -1 && gridPos.x == 0.) || (priorityMethod == -2 && gridPos.y == 0.);
 
     alpha += uv.x*1e-3;
 
@@ -549,6 +551,9 @@ void main()
 
         float h = 5.0;
         vec2 uv2 = vec2(cellUV.x, cellUV.y/0.5);
+
+        // uv2.x += _iTime*0.25;
+
         if(distance(uv2.y, .5) < 1e-3) uv2.y = 0.49;
 
 

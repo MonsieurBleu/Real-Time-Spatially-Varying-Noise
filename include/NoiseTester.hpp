@@ -30,10 +30,12 @@ namespace NoiseTester
     inline float alpha = 0.;
 
     inline int gridAlphaMode = -1;
+    inline int gridVarianceMode = -1;
 
     inline int method = 2;
     inline int output = 0;
     inline int varianceMethod = 2;
+    inline int priorityMethod = 1;
     inline int view = 0;
 
     inline ivec2 invertPriotiy = ivec2(0);
