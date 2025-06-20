@@ -552,20 +552,27 @@ void NoiseApp::mainloop()
 
                         for(int i = 0; i < r*r; i++)
                         {
-                            float d = .5*round(distance(vec3(ours[i]), vec3(ground[i])))/sqrt(255*255*3);
+                            float d = distance(vec3(ours[i])/255.f, vec3(ground[i])/255.f)/sqrt(3);
 
-                            if(i%r < 5)
-                            {
-                                d = (float)(i/r)/(float)(r);
-                            }
+                            // if(i%r < 5)
+                            // {
+                            //     d = (float)(i/r)/(float)(r);
+                            // }
 
-                            vec3 c(0);
+                            vec3 c(0.25, 0.1, 0.25);
                             
-                            c = mix(c, vec3(0, 0, 1), smoothstep(0.f, 0.075f,  d*2.f));
-                            c = mix(c, vec3(0, 1, 0), smoothstep(0.075f, 0.125f, d*2.f));
-                            c = mix(c, vec3(1, 1, 0), smoothstep(0.125f, 0.25f, d*2.f));
-                            c = mix(c, vec3(1, 0, 0), smoothstep(0.25f, 0.5f, d*2.f));
-                            c = mix(c, vec3(1, 0, 1), smoothstep(0.5f, 1.f, d*2.f));
+                            c = mix(c, vec3(0, 0.5, 1), smoothstep(0.f, 0.05f,  d));
+                            c = mix(c, vec3(0.1, 1, 0.5), smoothstep(0.05f, 0.075f,  d));
+                            c = mix(c, vec3(1, 1, 0), smoothstep(0.075f, 0.1f,  d));
+                            c = mix(c, vec3(1, 0.5, 0), smoothstep(0.1f, 0.25f,  d));
+                            c = mix(c, vec3(1, 0, 0), smoothstep(0.25f, 0.5f,  d));
+                            c = mix(c, vec3(1, 1, 1), smoothstep(0.5f, 1.0f,  d));
+
+                            // c = mix(c, vec3(0, 0, 1), smoothstep(0.f, 0.075f,  d*2.f));
+                            // c = mix(c, vec3(0, 1, 0), smoothstep(0.075f, 0.125f, d*2.f));
+                            // c = mix(c, vec3(1, 1, 0), smoothstep(0.125f, 0.25f, d*2.f));
+                            // c = mix(c, vec3(1, 0, 0), smoothstep(0.25f, 0.5f, d*2.f));
+                            // c = mix(c, vec3(1, 0, 1), smoothstep(0.5f, 1.f, d*2.f));
 
                             // c = vec3(abs(vec3(ours[i])- vec3(ground[i])))/255.f;
                             // c = vec3(clamp(d, 0.f, 1.f));
@@ -621,7 +628,7 @@ void NoiseApp::mainloop()
             doScreenshot = true;
             windowsSizeTmp = globals.windowSize();
 
-            screenshotFrameWait = 50;
+            screenshotFrameWait = 15;
         }
 
         mainloopPreRenderRoutine();

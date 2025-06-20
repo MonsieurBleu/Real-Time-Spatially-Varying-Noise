@@ -90,29 +90,29 @@ NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materi
     sprite->state.frustumCulled = false;
     // data.sprite->depthWrite = false;
 
-    // sprite->setMap(0, Loader<Texture2D>::get("PavingStones_C"));
-    // sprite->setMap(1, Loader<Texture2D>::get("PavingStones_P"));
-    // sprite->setMap(2, Loader<Texture2D>::get("PavingStones_P2"));
+    sprite->setMap(0, Loader<Texture2D>::get("alt_PavingStones_C"));
+    sprite->setMap(1, Loader<Texture2D>::get("PavingStones_P"));
+    sprite->setMap(2, Loader<Texture2D>::get("PavingStones_P2"));
 
-    // sprite->setMap(3, Loader<Texture2D>::get("Ground_C"));
-    // sprite->setMap(4, Loader<Texture2D>::get("Ground_P"));
-    // sprite->setMap(5, Loader<Texture2D>::get("Ground_P2"));
+    sprite->setMap(3, Loader<Texture2D>::get("Ground_C"));
+    sprite->setMap(4, Loader<Texture2D>::get("Ground_P"));
+    sprite->setMap(5, Loader<Texture2D>::get("Ground_P2"));
 
-    // sprite->setMap(6, Loader<Texture2D>::get("Rock_C"));
-    // sprite->setMap(7, Loader<Texture2D>::get("Rock_P"));
-    // sprite->setMap(8, Loader<Texture2D>::get("Rock_P2"));
+    sprite->setMap(6, Loader<Texture2D>::get("Rock_C"));
+    sprite->setMap(7, Loader<Texture2D>::get("Rock_P"));
+    sprite->setMap(8, Loader<Texture2D>::get("Rock_P2"));
 
-    sprite->setMap(0, Loader<Texture2D>::get("muscle_C"));
-    sprite->setMap(1, Loader<Texture2D>::get("muscle_P"));
-    sprite->setMap(2, Loader<Texture2D>::get("muscle_P"));
+    // sprite->setMap(0, Loader<Texture2D>::get("muscle_C"));
+    // sprite->setMap(1, Loader<Texture2D>::get("muscle_P"));
+    // sprite->setMap(2, Loader<Texture2D>::get("muscle_P"));
 
-    sprite->setMap(3, Loader<Texture2D>::get("graisse_C"));
-    sprite->setMap(4, Loader<Texture2D>::get("graisse_P"));
-    sprite->setMap(5, Loader<Texture2D>::get("graisse_P"));
+    // sprite->setMap(3, Loader<Texture2D>::get("graisse_C"));
+    // sprite->setMap(4, Loader<Texture2D>::get("graisse_P"));
+    // sprite->setMap(5, Loader<Texture2D>::get("graisse_P"));
 
-    sprite->setMap(6, Loader<Texture2D>::get("os_C"));
-    sprite->setMap(7, Loader<Texture2D>::get("os_P"));
-    sprite->setMap(8, Loader<Texture2D>::get("os_P"));
+    // sprite->setMap(6, Loader<Texture2D>::get("os_C"));
+    // sprite->setMap(7, Loader<Texture2D>::get("os_P"));
+    // sprite->setMap(8, Loader<Texture2D>::get("os_P"));
 
     sprite->uniforms.add(ShaderUniform(&NoiseTester::entry1, 35));
     sprite->uniforms.add(ShaderUniform(&NoiseTester::entry2, 36));

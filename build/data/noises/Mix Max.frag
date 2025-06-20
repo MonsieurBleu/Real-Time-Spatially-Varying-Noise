@@ -5,11 +5,11 @@
 
 layout (binding = 0) uniform sampler2D bTextures[9];
 
-float preservingMix(float col1, float avg1, float col2, float avg2, float alpha)
+vec3 preservingMix(vec3 col1, vec3 avg1, vec3 col2, vec3 avg2, float alpha)
 {
     // Variance preserving blending
     float ialpha = 1.-alpha;
-    float espf = avg1*alpha + avg2*ialpha;
+    vec3 espf = avg1*alpha + avg2*ialpha;
     return espf + (col1*alpha + col2*ialpha - espf)/sqrt(ialpha*ialpha + alpha*alpha);
 }
 
@@ -122,34 +122,17 @@ vec2 FS24_12(
     float v2, float p2, float m2,
     float alpha)
 {   
-    // p1 = 2.*p1-1.;
-    // p2 = 2.*p2-1.;
-    // alpha = 2.*alpha-1.;
-    // alpha = alpha*2.0;
-
-    // p2 -= alpha;
-    // p1 -= alpha;
-
-    // p1 *= -1;
-    // p2 *= -1;
-
     p2 += 2.0*(1.-alpha);
     p1 += 2.0*(alpha);
-
-    float CDF = .5 + .5*tanh(0.85*alpha);
-    // CDF = 1.0;
 
     filtrage = max(filtrage, 0.);
 
     float s = sqrt(m1*m1+m2*m2 + filtrage);
 
-    return vec2(
-        clamp(.5 - CDF*(p1 - p2)/s, 0., 1.), 
-        0.
-        );
+    float w = (p1 - p2)/s;
 
     return vec2(
-        clamp(1. - CDF*((p1 + alpha)-(p2 - alpha)/sqrt(m1*m1+m2*m2)), 0., 1.), 
+        1.-clamp(.5 + .5*tanh(0.85*w), 0., 1.), 
         0.
         );
 }
@@ -166,7 +149,7 @@ vec2 MixMaxMicro_Flat(
     float iCDF = 0.125*atanh((alpha+alpha)-1.);
 
     float sf = -d/(.5 - alpha + iCDF);
-    s = mix(s, sf, clamp(filtrage, 0., 1.));
+    s = mix(s, sf, clamp(sqrt(filtrage)*2., 0., 1.));
 
     s = max(s, 1e-6);
 
@@ -213,7 +196,8 @@ void main()
     vec2 borderEpsilon = 0.003.rr * 0.5;
 
     borderEpsilon.y *= gridRatio;
-    borderEpsilon *= max(gridSize.x, gridSize.y);
+    borderEpsilon *= 2.;
+    // borderEpsilon *= max(gridSize.x, gridSize.y);
 
     float fga = min(
         min(
@@ -243,7 +227,7 @@ void main()
     vec2 cellUVAR = cellUV;
     CorrectUV(cellUVAR, scale);
 
-    int it = 2;
+    const int it = 4;
     float itnb = it*it;
     vec3 color = vec3(0);
 
@@ -332,6 +316,10 @@ void main()
         doGroundTruthh = true;
         fragOutput = OUTPUT_VARIANCE;
     }
+    if(varianceMethodLocal == 0 && fragOutput != OUTPUT_FILTRAGE)
+    {
+        doGroundTruthh = true;
+    }
 
     // vec3 color1 = vec3(1, 1, 0);
     // vec3 color2 = vec3(1, 0, 1);
@@ -368,7 +356,7 @@ void main()
     //     default : break;
     // }
 
-    USING_FLAT_PRIORITY = priorityMethod == 1 || (priorityMethod == -1 && gridPos.x == 0.) || (priorityMethod == -2 && gridPos.y == 0.);
+    USING_FLAT_PRIORITY = priorityMethod == 1 || (priorityMethod == -1 && gridPos.x != 0.) || (priorityMethod == -2 && gridPos.y != 0.);
 
     alpha += uv.x*1e-3;
 
@@ -376,6 +364,51 @@ void main()
 /***
     [1] ###### Defining Parameters ########################### 
 ***/
+    {
+        // if(gridPos.x == 0)
+        // {
+        //     doVarianceCalculation = false;
+        //     _MixMax_choice = 1;
+        // }
+        // if(gridPos.x == 1)
+        // {
+        //     doGroundTruthh = true;
+        //     it = 1;
+        //     _MixMax_choice = 1;
+        // }
+
+        // if(gridPos.x == 0)
+        // {
+        //     _MixMax_choice = 1;
+        // }
+        // if(gridPos.x == 1)
+        // {
+        //     _MixMax_choice = 2;
+        // }
+
+        // if(gridPos.x == 0)
+        // {
+        //     doGroundTruthh = true;
+        //     if(gridPos.y == 1)
+        //         fragOutput = OUTPUT_VARIANCE;
+        // }
+
+        // if(gridPos.x == 0.5)
+        // {
+        //     // usePriorityDerivative = true;
+        //     // fragOutput = OUTPUT_FILTRAGE_1;
+        // }
+
+        // if(gridPos.x == 1)
+        // {
+        //     usePriorityDerivative = true;
+        //     // fragOutput = OUTPUT_FILTRAGE_1;
+        // }
+
+        // if(grid)
+        // fragOutput = OUTPUT_BLENDING_COLOR;
+    }
+
     /// NON BINARY RESULT WITH FS24 COMPARAISON
     // {
     //     #define INPUT1 ground
@@ -430,7 +463,7 @@ void main()
         //     break;
 
         //     case 2 : 
-            // doGroundTruthh = true; 
+        //     doGroundTruthh = true; 
         //     break;
         // }
     }
@@ -521,7 +554,6 @@ void main()
         // // fragOutput = OUTPUT_INFLUENCE_COLOR;
     }
 
-
 /***
     [2] ###### Starting the final view setups ########################### 
 ***/
@@ -533,7 +565,8 @@ void main()
 
     if(!doGridBorders || (gridSize.x <= 1 && gridSize.y <= 1)){fga = 1.; border = 0.;}
 
-    for(int k = doGroundTruthh ? 0 : 1; k < 2; k++)
+    int k = doGroundTruthh ? 0 : 1;
+    for(; k < 2; k++)
     for(i = 0; i < it; i+= doGroundTruthh ? 1 : it, j = 0)
     for(j = 0; j < it; j+= doGroundTruthh ? 1 : it)
     {
@@ -574,6 +607,7 @@ void main()
     }
 
     auv *= 0.25;
+    // auv *= 0.5;
 
 /***
     [3] ###### Defining Inputs ########################### 
@@ -693,20 +727,25 @@ void main()
         // in1.filtered = derivative(in1.uv*1024.)/8.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
         // in2.filtered = derivative(in2.uv*1024.)/8.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
 
-        in1.filtered = derivative(in1.uv*1024.)/16.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
-        in2.filtered = derivative(in2.uv*1024.)/16.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
+        in1.filtered = derivative(in1.uv*64)/64.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
+        in2.filtered = derivative(in2.uv*64)/64.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
 
+        // in1.filtered = derivative(in1.uv*64.)/'64.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
+        // in2.filtered = derivative(in2.uv*64.)/64.; // Meilleurs résultats pour ground et pavingstones avec MixMaxMicro_Flat
+
+
+        // if(in1.filtered > 1) discard;
 
         // float duv = derivative(in1.uv*1024.)/8.0; 
         if(usePriorityDerivative)
         {
-            float dpr1 = derivativeLinear(p1*1.0);
+            float dpr1 = derivativeLinear(1.-p1)/2.;
             float duv1 = in1.filtered;
-            in1.filtered = mix(dpr1, 1.0, duv1*2.0);
+            in1.filtered = mix(dpr1*dpr1, 1.0, duv1);
 
-            float dpr2 = derivativeLinear(p2*1.0);
+            float dpr2 = derivativeLinear(1.-p2)/2.;
             float duv2 = in2.filtered;
-            in2.filtered = mix(dpr2, 1.0, duv2*duv2*2.0);
+            in2.filtered = mix(dpr2*dpr2, 1.0, duv2);
         }
 
         if(USE_FS24_FILTRERED_LEVEL_APPROXIMATION)
@@ -715,6 +754,7 @@ void main()
             if(in2.isTexture) in2.filtered = FS24_LA_MULT*abs(in2.prioritySquared - in2.priority*in2.priority);
         }
 
+        // filtrage = doGroundTruthh ? 0. : sqrt(in1.filtered*in1.filtered + in2.filtered*in2.filtered);
         filtrage = doGroundTruthh ? 0. : in1.filtered + in2.filtered;
     }
 
@@ -738,6 +778,9 @@ void main()
             if(!co1.isTexture) co1.color = co1.value*color1;
             if(!co2.isTexture) co2.color = co2.value*color2;
             fragColor.rgb = mix(co1.color, co2.color, mixmax.r);
+
+            // fragColor.rgb = preservingMix(co1.color, color1*0.5.rrr, co2.color, color2*0.5.rrr, 1.-mixmax.r);
+            // fragColor.rgb = mix(p1, p2, mixmax.r).rrr;
         break;
 
         case OUTPUT_BLENDING_GREY : 
@@ -753,15 +796,15 @@ void main()
         break; 
 
         case OUTPUT_FILTRAGE : 
-            fragColor.rgb = filtrage.rrr;
+            fragColor.rgb = sqrt(filtrage.rrr);
         break; 
 
         case OUTPUT_FILTRAGE_1 : 
-            fragColor.rgb = sqrt(in1.filtered).rrr;
+            fragColor.rgb = 2. * sqrt(in1.filtered).rrr;
         break; 
 
         case OUTPUT_FILTRAGE_2 : 
-            fragColor.rgb = sqrt(in2.filtered).rrr;
+            fragColor.rgb = 2. * sqrt(in2.filtered).rrr;
         break; 
 
         case OUTPUT_VARIANCE :
@@ -772,14 +815,18 @@ void main()
             }
             else
             {
-                variance += pow(abs(p1-mean), 2.0);
-                variance2 += pow(abs(p2-mean2), 2.0);
+                variance += pow(p1-mean, 2.0);
+                variance2 += pow(p2-mean2, 2.0);
             }
 
             fragColor.rgb = vec3(0);
             if(i == it-1 && j == it-1 && k == 1)
             {
-                fragColor.rgb = sqrt(variance*variance + variance2*variance2).rrr;
+                variance = 2.*variance/itnb;
+                variance2 = 2.*variance2/itnb;
+                fragColor.rgb = sqrt(variance + variance2).rrr;
+                // fragColor.rgb = 2.0 * sqrt(2.0*variance.rrr/itnb);
+                // fragColor.rgb = mean.rrr;
                 itnb = 1;
             }
         break;

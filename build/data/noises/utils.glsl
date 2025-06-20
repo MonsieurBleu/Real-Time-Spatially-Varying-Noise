@@ -78,7 +78,7 @@ void CorrectUV(in out vec2 auv, vec2 scale)
 
 float distanceFunction(vec2 uv)
 {
-    return clamp((uv.x + 1.5)*0.75, 0.0, 1e3);
+    // return clamp((uv.x + 1.5)*0.75, 0.0, 1e3);
 
     return pow(gradientNoise(uv * 20.0), 1.0);
 

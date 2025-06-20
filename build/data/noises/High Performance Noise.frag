@@ -38,7 +38,8 @@ void main()
     UV_PREPROCESS
 
     float hexSize = 0.025;
-    auv *= 1.25;
+    auv *= 0.5;
+    // auv *= 1.25;
     // + (cos(_iTime * 0.01)*0.5 + 0.5);
 
 
@@ -237,9 +238,9 @@ void main()
 
     vec3 rands[3] = vec3[3]
     (
-        rand3to3(vec3(coords[0], 0)),
-        rand3to3(vec3(coords[1], 0)),
-        rand3to3(vec3(coords[2], 0))
+        rand3to3(vec3(coords[0], 0))*0.,
+        rand3to3(vec3(coords[1], 0))*0.,
+        rand3to3(vec3(coords[2], 0))*0.
     );
 
     vec3 colors[3] = vec3[3](
@@ -254,15 +255,18 @@ void main()
     for(int i = 0; i < 3; i++)
     {
         // if(distanceFunction(coords[i]) < 0.1)
-        if(distanceFunction(coords[i]) > rands[i].z + 0.1)
+        if(distanceFunction(coords[i]) > coords[i].x*0.5 + 0.55)
+        // if(distanceFunction(coords[i]) < 0.5)
         {
             // colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
             // esp[i] = 0.5;
             // var[i] = 0.0077;
 
-            colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(40.0 * auv * vec2(0.25, 1.0)))).rrr;
+            colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(50.0 * auv * vec2(0.25, 1.0)))).rrr;
             esp[i] = 0.76;
             var[i] = 0.125;
+
+            colors[i] = vec3(1);
         }
         else
         {
@@ -276,9 +280,13 @@ void main()
             // colors[i] = vec3(0);
             // esp[i] = 0;
 
-            colors[i] = (smoothstep(-0.25, 1.0, 0.75 - cnoise(auv*30.0 * -vec2(0.75, 1.0)))).rrr;
+            colors[i] = (smoothstep(-0.25, 1.0, 0.75 - cnoise(10. + auv*30.0 * -vec2(0.75, 1.0)))).rrr;
             esp[i] = 0.79;
             var[i] = 0.056;
+
+            // var[i] = 0;
+
+            colors[i] = vec3(0);
         }
 
         colors[i] = clamp(colors[i], 0, 1);
@@ -300,10 +308,19 @@ void main()
         )/W
         ;
 
+    fragColor.rgb = colors[0]*alphas[0] + colors[1]*alphas[1] + colors[2]*alphas[2];
+
     alphas *= alphas;
     float varf = (alphas[0]*var[0] + alphas[1]*var[1] + alphas[2]*var[2])/(W*W);
-    // fragColor.rgb = varf.rrr*50.f;
 
+    // fragColor.rgb = varf.rrr;
+
+    // fragColor.rgb = colors[1];
+
+    vec3 n1 = gradientNoise(auv*10.0).rrr;;
+    vec3 n2 = voronoi3d(vec3(auv*20.0, 0), tmp).rrr *0.6666;
+
+    // fragColor.rgb = n1*.5 + n2*.5;
 
     // fragColor.rgb = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(40.0 * auv * vec2(0.25, 1.0)))).rrr;
     // AVG = 0.45
