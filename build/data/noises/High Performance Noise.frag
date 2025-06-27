@@ -258,21 +258,33 @@ void main()
         if(distanceFunction(coords[i]) > coords[i].x*0.5 + 0.55)
         // if(distanceFunction(coords[i]) < 0.5)
         {
-            // colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
-            // esp[i] = 0.5;
-            // var[i] = 0.0077;
+            colors[i] = gradientNoise(auv*10.0 + 10.0*rands[i].x).rrr;
+            esp[i] = 0.5;
+            var[i] = 0.0077;
 
-            colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(50.0 * auv * vec2(0.25, 1.0)))).rrr;
-            esp[i] = 0.76;
-            var[i] = 0.125;
+            // colors[i] = 1. - voronoi3d(vec3(100 - auv*20.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
+            // esp[i] = 0.529 * 0.6666;
+            // var[i] = 0.015;
 
+            // colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(50.0 * auv * vec2(0.25, 1.0)))).rrr;
+            // esp[i] = 0.76;
+            // var[i] = 0.125;
+
+            // colors[i] = vec3(1);
+
+            // colors[i] = smoothstep(vec3(0.4), vec3(0.6), colors[i]);
+            // esp[i] = pow(esp[i], 4.);
+
+            // var[i] = 1;
+            var[i] = 0;
             colors[i] = vec3(1);
         }
         else
         {
-            // colors[i] = voronoi3d(vec3(auv*20.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
-            // esp[i] = 0.529 * 0.6666;
-            // var[i] = 0.015;
+            colors[i] = 1.-voronoi3d(vec3(auv*20.0 - 10.0*rands[i].x, 0), tmp).rrr *0.6666;
+            esp[i] = 0.529 * 0.6666;
+            var[i] = 0.015;
+            
 
             // colors[i] = rand3to1(tmp).rrr;
             // esp[i] = 0.5;
@@ -280,12 +292,16 @@ void main()
             // colors[i] = vec3(0);
             // esp[i] = 0;
 
-            colors[i] = (smoothstep(-0.25, 1.0, 0.75 - cnoise(10. + auv*30.0 * -vec2(0.75, 1.0)))).rrr;
-            esp[i] = 0.79;
-            var[i] = 0.056;
+            // colors[i] = 1.0 - (smoothstep(0.9, 1.0, 1.0 - cnoise(50.0 * auv * vec2(0.25, 1.0)))).rrr;
+            // esp[i] = 0.76;
+            // var[i] = 0.125;
 
-            // var[i] = 0;
 
+            // colors[i] = (smoothstep(-0.25, 1.0, 0.75 - cnoise(10. + auv*30.0 * -vec2(0.75, 1.0)))).rrr;
+            // esp[i] = 0.79;
+            // var[i] = 0.056;
+
+            var[i] = 0;
             colors[i] = vec3(0);
         }
 

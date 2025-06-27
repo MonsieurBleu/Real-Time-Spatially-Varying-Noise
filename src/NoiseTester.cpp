@@ -90,7 +90,7 @@ NoiseTester::NoiseTesterGroup NoiseTester::noiseSprite(const std::string &materi
     sprite->state.frustumCulled = false;
     // data.sprite->depthWrite = false;
 
-    sprite->setMap(0, Loader<Texture2D>::get("alt_PavingStones_C"));
+    sprite->setMap(0, Loader<Texture2D>::get("PavingStones_C"));
     sprite->setMap(1, Loader<Texture2D>::get("PavingStones_P"));
     sprite->setMap(2, Loader<Texture2D>::get("PavingStones_P2"));
 

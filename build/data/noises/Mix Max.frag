@@ -117,6 +117,9 @@ vec2 FS24_4(
 
 float filtrage = 0.;
 
+float CDF_func(float x){return .5 + .5*tanh(0.85*x);}
+float iCDF_func(float x){return atanh((x - .5)*2.)/0.85;}
+
 vec2 FS24_12(
     float v1, float p1, float m1,
     float v2, float p2, float m2,
@@ -132,7 +135,7 @@ vec2 FS24_12(
     float w = (p1 - p2)/s;
 
     return vec2(
-        1.-clamp(.5 + .5*tanh(0.85*w), 0., 1.), 
+        1.-clamp(CDF_func(w), 0., 1.), 
         0.
         );
 }
@@ -148,8 +151,21 @@ vec2 MixMaxMicro_Flat(
 
     float iCDF = 0.125*atanh((alpha+alpha)-1.);
 
+    // iCDF = 0.0;
+
+    // s = max(s, 1e-6);
+    // float w = clamp(.5 - (p1-p2 + d)/s - iCDF, 0., 1.);
+    // w = mix(w, 1.-alpha, clamp(sqrt(filtrage), 0., 1.));
+    // return vec2(w, 0.);
+
+
     float sf = -d/(.5 - alpha + iCDF);
-    s = mix(s, sf, clamp(sqrt(filtrage)*2., 0., 1.));
+    s = mix(s, sf, clamp(
+        sqrt(filtrage)*
+        // 2.
+        // sqrt(.5)
+        SQR2
+        , 0., 1.));
 
     s = max(s, 1e-6);
 
@@ -164,7 +180,7 @@ int _MixMax_choice = 0;
 vec2 _MixMax_choicef(
     float v1, float p1, float m1,
     float v2, float p2, float m2,
-    float alpha)
+    float alpha) 
 {
     switch(_MixMax_choice)
     {
@@ -227,7 +243,7 @@ void main()
     vec2 cellUVAR = cellUV;
     CorrectUV(cellUVAR, scale);
 
-    const int it = 4;
+    const int it = 1;
     float itnb = it*it;
     vec3 color = vec3(0);
 
@@ -401,7 +417,7 @@ void main()
 
         // if(gridPos.x == 1)
         // {
-        //     usePriorityDerivative = true;
+            // usePriorityDerivative = true;
         //     // fragOutput = OUTPUT_FILTRAGE_1;
         // }
 
@@ -765,7 +781,7 @@ void main()
     );
     
     // in1.value *= inversingValue1 ? -1. : 1.;
-    // in2.value *= inversingValue2 ? -1. : 1.;
+    // in2.value *= inversingValue2 ? -1. : 1.; 
     co1.value = inversingValue1 ? 1.-co1.value : co1.value;
     co2.value = inversingValue2 ? 1.-co2.value : co2.value;
 
@@ -836,6 +852,7 @@ void main()
 
     color += fragColor.rgb / (doGroundTruthh ? itnb : 1.);
     }
+
 
     fragColor.a = fga;
     fragColor.rgb = mix(color, vec3(0.1), border);
