@@ -192,6 +192,17 @@ void NoiseApp::initInput()
             InputManager::Filters::always, false)
     );
 
+    _inputs.push_back(&
+        InputManager::addEventInput(
+            "toggle auto shader refresh", GLFW_KEY_F7, 0, GLFW_PRESS, [&]() {
+                
+                doResize = true;
+                doColormMapGeneration = true;
+                
+            },
+            InputManager::Filters::always, false)
+    );
+
 }
 
 void NoiseApp::addNoiseViewers()
@@ -601,6 +612,39 @@ void NoiseApp::mainloop()
             if(!screenshotFrameWait)
             {
                 stbi_flip_vertically_on_write(true);
+                
+                if(doColormMapGeneration)
+                {
+                    std::vector<vec3> screenf;
+                    for(auto i : screen2D)
+                        screenf.push_back(vec3(i)/255.f);
+                    
+                    const int s = screen2Dres.x;
+                    for(int j = 1; j < s; j++)
+                    for(int i = 0; i < s; i++)
+                    {
+                        // screenf[i*s + j] = 
+                        //     screenf[i*s + j - 1]*0.5f +
+                        //     screenf[i*s + j - 1 - s]*0.25f +
+                        //     screenf[i*s + j - 1 + s]*0.25f;
+                        
+                        float cnt = 0.;
+                        vec3 sum(0.f);
+                        for(int k = i-j/2; k < i+j/2; k++)
+                        {
+                            float id = 1.-(float)clamp(k, 0, s-1)/(float)s;
+                            float weight = 1.0;
+                            weight = id;
+
+                            sum += weight*screenf[clamp(k, 0, s-1)*s];
+                            cnt += weight;
+                        }
+                        screenf[i*s + j] = sum/cnt;
+                    }
+    
+                    for(int i = 0; i < screen2D.size(); i++)
+                        screen2D[i] = u8vec3(round(vec3(screenf[i])*255.f));
+                }
 
                 stbi_write_png(
                     ("results/" + currentNoise + ".png").c_str(),

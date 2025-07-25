@@ -601,7 +601,7 @@ void main()
         float h = 5.0;
         vec2 uv2 = vec2(cellUV.x, cellUV.y/0.5);
 
-        // uv2.x += _iTime*0.25;
+        // uv2.x += cos(_iTime);
 
         if(distance(uv2.y, .5) < 1e-3) uv2.y = 0.49;
 
@@ -795,7 +795,12 @@ void main()
             if(!co2.isTexture) co2.color = co2.value*color2;
             fragColor.rgb = mix(co1.color, co2.color, mixmax.r);
 
-            // fragColor.rgb = preservingMix(co1.color, color1*0.5.rrr, co2.color, color2*0.5.rrr, 1.-mixmax.r);
+            // fragColor.r = mix(p1, FiHash(uv), mixmax.r);
+            // fragColor.g = mix(p2, FiHash(uv), 1.-mixmax.r);
+
+            // fragColor.rgb = fragColor.rrr;
+
+            // fragColor.rgb = preservingMix(co1.color, 0.5.rrr, co2.color, 0.5.rrr, 1.-mixmax.r);
             // fragColor.rgb = mix(p1, p2, mixmax.r).rrr;
         break;
 
@@ -849,6 +854,8 @@ void main()
 
         default : break;
     }
+
+    // fragColor.rgb = p2.rrr;
 
     color += fragColor.rgb / (doGroundTruthh ? itnb : 1.);
     }

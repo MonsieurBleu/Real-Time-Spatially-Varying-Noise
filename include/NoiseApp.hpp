@@ -29,6 +29,7 @@ private:
     bool doResize = false;
 
     bool doMipMapGeneration = false;
+    bool doColormMapGeneration = false;
 
 public:
     
